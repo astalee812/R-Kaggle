@@ -33,25 +33,24 @@ library(lubridate)
 install.packages("stringi")
 library(stringi)
 library(lubridate)
-salesdata3$date<-dmy(salesdata3$date)
-salesdata3$year<-year(salesdata3$date)
-salesdata3$month<-month(salesdata3$date)
-salesdata3$day<-day(salesdata3$date)
-salesdata3$weekday<-weekdays(salesdata3$date)
-salesdata3$Quar<-quarter(salesdata3$date)
+salesdata3$date<-as.Date(salesdata3$date,"%d.%m.%Y")
+
 
 #看一下資料結構，把數值換成factor
 str(salesdata3)
+salesdata3$year<-year(salesdata3$date)
 salesdata3$year<-as.factor(salesdata3$year)
+salesdata3$month<-month(salesdata3$date)
 salesdata3$month<-as.factor(salesdata3$month)
+salesdata3$day<-day(salesdata3$date)
 salesdata3$day<-as.factor(salesdata3$day)
+salesdata3$weekday<-weekdays(salesdata3$date)
 salesdata3$weekday<-as.factor(salesdata3$weekday)
-salesdata3$Quar<-as.factor(salesdata3$Quar)
-salesdata3$item_id<-as.factor(salesdata3$item_id)
-salesdata3$shop_id<-as.factor(salesdata3$shop_id)
 
 #來看看有幾間分店，有60家分店阿!
-unique(salesdata3$shop_id)
+install.packages("dplyr")
+library(dplyr)
+coun
 
 #那看看哪家分店比較夯?是第31號店阿!!
 sort(table(salesdata3$shop_id))
