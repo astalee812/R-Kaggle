@@ -53,6 +53,9 @@ installr::updateR(keep_install_file = TRUE)
 #來看看有幾間分店，有60家分店阿!
 install.packages("dplyr")
 require(dplyr)
+
+#這邊發現dplyr一直裝不好，重新裝一次
+install.packages("dplyr", dependencies=TRUE)
 length(unique(salesdata3$shop_id))
 
 #那看看哪家分店比較夯?是第31號店阿!!出現的頻率很高阿
@@ -62,11 +65,13 @@ sort(table(salesdata3$shop_id))
 install.packages("magrittr")
 library(magrittr)
 
-#看看哪家分店的銷售比較好，賣了很多商品
-total_sale<-salesdata3%>%group_by(shop_id,shop_name)%>%summarise(total_qty=sum(item_cnt_day))
+#看看哪家分店的銷售比較好，賣了很多商品，發現一樣是31號店賣出的東西最多
+total_sale<-salesdata3%>%group_by(shop_id,shop_name)%>%summarise(total_qty=sum(item_cnt_day))%>%
+  arrange(desc(total_qty))
 
 install.packages("ggplot2")
 library(ggplot2)
+
 
 
 
