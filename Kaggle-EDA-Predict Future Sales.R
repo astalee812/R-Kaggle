@@ -74,8 +74,21 @@ install.packages("ggplot2")
 library(ggplot2)
 #ace=aesthetic mappings，把素材綁到X跟Y軸，要畫長條圖必須要加stat = "identity"，不然會畫不出來
 #colour是線的顏色，fill是填滿的顏色
-ggplot(total_sale,aes(x=as.factor(shop_id),y=total_qty,fill=as.factor(shop_id)))+geom_bar(stat = "identity")
+ggplot(total_sale,aes(x=as.factor(shop_id),y=total_qty,fill=as.factor(shop_id)))+geom_bar(stat = "identity")+
+  labs(title = "Most popular shop by quantity volume",x="shop",y="quantity volume",fill="shop_id")
 
+#計算共有幾個商品項目，共有21807個商品
+length(unique(salesdata3$item_id))
 
+#哪個商品是被賣出最多次的，n()=the number of observations within a group，ungroup=Return data to non-grouped.
+item_freq<-salesdata3%>%group_by(item_id,item_name)%>%summarise(freq=n())%>%ungroup()%>%arrange(desc(freq))
 
+#來看看每一家分店賣最好的東西分別是什麼
+popular_item<-salesdata3%>%group_by(shop_id,item_id)%>%summarise(quantity_sold=sum(item_cnt_day))%>%
+  filter(quantity_sold==max(quantity_sold))%>%arrange(desc(quantity_sold))
 
+#來看看我們有多少品類
+length(unique(salesdata3$item_category_id))
+
+#每家分店分別有多少品類
+category_shop<-salesdata3%>%group_by(shop_id)%>%distinct(item_category_id)%>%summarise(category_n=n())
