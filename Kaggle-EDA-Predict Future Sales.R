@@ -69,8 +69,12 @@ library(magrittr)
 total_sale<-salesdata3%>%group_by(shop_id,shop_name)%>%summarise(total_qty=sum(item_cnt_day))%>%
   arrange(desc(total_qty))
 
+#用張圖來表示一下分店銷售排行
 install.packages("ggplot2")
 library(ggplot2)
+#ace=aesthetic mappings，把素材綁到X跟Y軸，要畫長條圖必須要加stat = "identity"，不然會畫不出來
+#colour是線的顏色，fill是填滿的顏色
+ggplot(total_sale,aes(x=as.factor(shop_id),y=total_qty,fill=as.factor(shop_id)))+geom_bar(stat = "identity")
 
 
 
