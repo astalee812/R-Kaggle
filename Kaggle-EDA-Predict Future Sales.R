@@ -52,7 +52,7 @@ installr::updateR(keep_install_file = TRUE)
 
 #來看看有幾間分店，有60家分店阿!
 install.packages("dplyr")
-library(dplyr)
+require(dplyr)
 length(unique(salesdata3$shop_id))
 
 #那看看哪家分店比較夯?是第31號店阿!!出現的頻率很高阿
@@ -63,8 +63,7 @@ install.packages("magrittr")
 library(magrittr)
 
 #看看哪家分店的銷售比較好，賣了很多商品
-total_sale<-
-
+total_sale<-salesdata3%>%group_by(shop_id,shop_name)%>%summarise(total_qty=sum(item_cnt_day))
 
 install.packages("ggplot2")
 library(ggplot2)
