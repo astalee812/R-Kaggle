@@ -55,11 +55,19 @@ install.packages("dplyr")
 library(dplyr)
 length(unique(salesdata3$shop_id))
 
-#那看看哪家分店比較夯?是第31號店阿!!
+#那看看哪家分店比較夯?是第31號店阿!!出現的頻率很高阿
 sort(table(salesdata3$shop_id))
 
+#先下載piping的套件
+install.packages("magrittr")
+library(magrittr)
+
+#看看哪家分店的銷售比較好，賣了很多商品
+total_sale<-
 
 
+install.packages("ggplot2")
+library(ggplot2)
 
 
 
