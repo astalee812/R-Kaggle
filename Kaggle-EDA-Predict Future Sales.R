@@ -47,10 +47,13 @@ salesdata3$day<-as.factor(salesdata3$day)
 salesdata3$weekday<-weekdays(salesdata3$date)
 salesdata3$weekday<-as.factor(salesdata3$weekday)
 
+#先來更新一下R的版本
+installr::updateR(keep_install_file = TRUE)
+
 #來看看有幾間分店，有60家分店阿!
 install.packages("dplyr")
 library(dplyr)
-coun
+length(unique(salesdata3$shop_id))
 
 #那看看哪家分店比較夯?是第31號店阿!!
 sort(table(salesdata3$shop_id))
