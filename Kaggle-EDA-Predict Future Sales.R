@@ -129,3 +129,39 @@ ggplot(Total_Day_sale,aes(x = as.factor(day), y = total_s, fill =as.factor(day))
   geom_bar(stat = 'identity') + 
   theme(legend.position = "none")+
   labs(y = 'Total unit sales', x = 'day', title = 'Total Sales by day')
+
+#做個時間序列圖，依照每家店每個月的銷售PIC
+shop_sale<-salesdata3%>%group_by(shop_id,month)%>%summarise(total_qty=sum(item_cnt_day))%>%arrange(month)
+install.packages("timeSeries")
+install.packages("timeDate")
+library(timeDate)
+library(timeSeries)
+ts_mon_sales<-ts(shop_sale$total_qty, start =c(2013,1), end =c(2015,10), frequency= 12)
+plot(ts_mon_sales)
+
+#開始來做預測by商家
+install.packages("forecast")
+library(forecast)
+ts_mon_sales_model<-auto.arima(ts_mon_sales)
+ts_mon_sales_model
+#預測未來五個月的銷售狀況
+predict_sales<- predict(ts_mon_sales_model ,n.ahead = 5, se.fit=T)
+predict_sales
+forecast_sales<- forecast(object=ts_mon_sales_model, h=5)
+forecast_sales
+plot(forecast_sales)
+acf(forecast_sales$residuals, lag.max=20)
+plot.ts(forecast_sales$residuals)
+
+#預測by商品
+shop_item_mon_sales<- salesdata3%>% group_by(item_id,month)%>% summarise(items_sold = sum(item_cnt_day), total_sales = sum(item_price*item_cnt_day))%>% ungroup()%>% arrange(desc(items_sold))
+ts_shop_item_mon_sales<- ts(shop_item_mon_sales$items_sold, start =c(2013,1), end =c(2015,10), frequency= 12)
+plot(ts_shop_item_mon_sales)
+ts_shop_item_mon_sales_model<- auto.arima(ts_shop_item_mon_sales)
+ts_shop_item_mon_sales_model
+#預測未來五個月的銷售狀況
+predict_ID_sales<- predict(ts_shop_item_mon_sales_model ,n.ahead = 5, se.fit=T)
+predict_ID_sales
+forecast_ID_sales<- forecast(object=ts_shop_item_mon_sales_model, h=5)
+forecast_ID_sales
+plot(forecast_ID_sales)
