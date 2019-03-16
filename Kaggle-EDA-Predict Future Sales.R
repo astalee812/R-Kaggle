@@ -165,3 +165,4 @@ predict_ID_sales
 forecast_ID_sales<- forecast(object=ts_shop_item_mon_sales_model, h=5)
 forecast_ID_sales
 plot(forecast_ID_sales)
+
