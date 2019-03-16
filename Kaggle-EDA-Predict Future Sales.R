@@ -90,5 +90,12 @@ popular_item<-salesdata3%>%group_by(shop_id,item_id)%>%summarise(quantity_sold=s
 #來看看我們有多少品類
 length(unique(salesdata3$item_category_id))
 
-#每家分店分別有多少品類
+#每家分店分別有多少品類，並畫圖
 category_shop<-salesdata3%>%group_by(shop_id)%>%distinct(item_category_id)%>%summarise(category_n=n())
+ggplot(category_shop,aes(x=as.factor(category_shop$shop_id),y=category_shop$category_n),fill=as.factor(category_shop$shop_id))+
+  geom_bar(stat = "identity")+
+  labs(title = "Category in shop",x="shop",y="number of category",fill="shop_id")
+
+#哪個品類被賣出的頻率最高
+category_frq_shop<-salesdata3%>%group_by(shop_id)%>%summarise(count=n_distinct(item_category_id))%>%
+  arrange(desc(count))
