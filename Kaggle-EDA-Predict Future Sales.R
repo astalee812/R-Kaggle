@@ -110,3 +110,12 @@ ggplot(monthly_sale,aes(x = as.factor(month), y = total_qty, fill =as.factor(mon
   geom_bar(stat = 'identity') + 
   theme(legend.position = "none")+
   labs(y = 'Total unit sales', x = 'Month', title = 'Total Sales by Month')
+
+#看看星期幾的銷售比較好，畫個圖
+weekday_sale<-salesdata3%>%group_by(weekday)%>%summarise(total_qty=sum(item_cnt_day))
+ggplot(weekday_sale,aes(x = as.factor(weekday), y = total_qty, fill =as.factor(weekday)))+
+  geom_bar(stat = 'identity') + 
+  theme(legend.position = "none")+
+  labs(y = 'Total unit sales', x = 'Weekday', title = 'Total Sales by Weekday')
+
+
