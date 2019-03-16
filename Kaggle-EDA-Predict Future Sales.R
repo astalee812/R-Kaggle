@@ -139,6 +139,8 @@ library(timeSeries)
 ts_mon_sales<-ts(shop_sale$total_qty, start =c(2013,1), end =c(2015,10), frequency= 12)
 plot(ts_mon_sales)
 
+#-----------------------------------------結束EDA----------------------------------------------------------
+
 #開始來做預測by商家
 install.packages("forecast")
 library(forecast)
@@ -166,3 +168,4 @@ forecast_ID_sales<- forecast(object=ts_shop_item_mon_sales_model, h=5)
 forecast_ID_sales
 plot(forecast_ID_sales)
 
+#--------------------------------------------做出了預測但不是比賽要的格式------------------------------------------------------------------------------------------------
