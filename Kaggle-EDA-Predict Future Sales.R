@@ -96,6 +96,17 @@ ggplot(category_shop,aes(x=as.factor(category_shop$shop_id),y=category_shop$cate
   geom_bar(stat = "identity")+
   labs(title = "Category in shop",x="shop",y="number of category",fill="shop_id")
 
-#哪個品類被賣出的頻率最高
+#哪個品類被賣出的頻率最高，25的品類賣出頻率很高
 category_frq_shop<-salesdata3%>%group_by(shop_id)%>%summarise(count=n_distinct(item_category_id))%>%
   arrange(desc(count))
+
+#看看哪個品類貢獻度最高，是40的品類貢獻最多
+category_sale<-salesdata3%>%group_by(item_category_id)%>%summarise(total_qty=sum(item_cnt_day))%>%
+  arrange(desc(total_qty))
+
+#看看每個月的銷售量，畫個圖
+monthly_sale<-salesdata3%>%group_by(month)%>%summarise(total_qty=sum(item_cnt_day))
+ggplot(monthly_sale,aes(x = as.factor(month), y = total_qty, fill =as.factor(month)))+
+  geom_bar(stat = 'identity') + 
+  theme(legend.position = "none")+
+  labs(y = 'Total unit sales', x = 'Month', title = 'Total Sales by Month')
