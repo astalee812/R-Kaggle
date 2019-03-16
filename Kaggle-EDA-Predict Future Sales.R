@@ -104,18 +104,28 @@ category_frq_shop<-salesdata3%>%group_by(shop_id)%>%summarise(count=n_distinct(i
 category_sale<-salesdata3%>%group_by(item_category_id)%>%summarise(total_qty=sum(item_cnt_day))%>%
   arrange(desc(total_qty))
 
-#看看每個月的銷售量，畫個圖
+#看看每個月的銷售PIC數，畫個圖
 monthly_sale<-salesdata3%>%group_by(month)%>%summarise(total_qty=sum(item_cnt_day))
 ggplot(monthly_sale,aes(x = as.factor(month), y = total_qty, fill =as.factor(month)))+
   geom_bar(stat = 'identity') + 
   theme(legend.position = "none")+
   labs(y = 'Total unit sales', x = 'Month', title = 'Total Sales by Month')
 
-#看看星期幾的銷售比較好，畫個圖
+#看看星期幾的銷售PIC比較好，畫個圖
 weekday_sale<-salesdata3%>%group_by(weekday)%>%summarise(total_qty=sum(item_cnt_day))
 ggplot(weekday_sale,aes(x = as.factor(weekday), y = total_qty, fill =as.factor(weekday)))+
   geom_bar(stat = 'identity') + 
   theme(legend.position = "none")+
   labs(y = 'Total unit sales', x = 'Weekday', title = 'Total Sales by Weekday')
 
+#看看整體的時間趨勢並畫圖
+salesdata3 %>%
+  ggplot(aes(date)) +
+  geom_freqpoly(color = "blue", binwidth = 10, size = 1.2)
 
+#算每日銷售囉
+Total_Day_sale<-salesdata3%>%group_by(day)%>%summarise(total_s=sum(item_cnt_day*item_price))
+ggplot(Total_Day_sale,aes(x = as.factor(day), y = total_s, fill =as.factor(day)))+
+  geom_bar(stat = 'identity') + 
+  theme(legend.position = "none")+
+  labs(y = 'Total unit sales', x = 'day', title = 'Total Sales by day')
