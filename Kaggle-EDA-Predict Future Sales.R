@@ -169,3 +169,12 @@ forecast_ID_sales
 plot(forecast_ID_sales)
 
 #--------------------------------------------做出了預測但不是比賽要的格式------------------------------------------------------------------------------------------------
+
+install.packages("gbm")
+library(gbm)
+mexp<-lm(item_cnt_day ~  item_id+shop_id , salesdata3)
+summary(mexp)
+pred1<-predict(mexp,testdata,type = "response")
+submission<-data.frame(ID=testdata$ID,item_cnt_month=pred1)
+head(submission)
+write.csv(submission,"submisstion.csv")
