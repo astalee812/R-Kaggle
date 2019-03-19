@@ -15,7 +15,24 @@ summary(train)
 
 #來看一下SalePrice的分布是否為常態分配
 summary(train$SalePrice)
-#看起來不妙，畫個圖清楚看看分配
+#看起來不妙，畫個圖清楚看看分配，發現崩潰阿!是右偏分配阿
 install.packages("ggplot2")
 library(ggplot2)
-ggplot()
+ggplot(train,aes(x=SalePrice,fill=length(as.factor(train$Id))))+
+  geom_histogram(binwidth = 5000)+
+  ggtitle("Histogram of SalePrice")+
+  xlab("House Price")+
+  ylab("number of House")
+
+#做線性回歸的一項大條件就是要為常態分配，所以我們要對我們的data做調整讓他變成常態分配
+#我要把saleprice做成對數分配，在作圖時binwidth的數值也要改小，就會變成神奇的常態分配
+train$logSalePrice<-log(train$SalePrice)
+ggplot(train,aes(x=train$logSalePrice,fill=length(Id)))+
+  geom_histogram(binwidth = 0.05)+
+  ggtitle("Histogram of LogSalePrice")+
+  xlab("Log term of House Price")+
+  ylab("number of House")
+
+
+
+
