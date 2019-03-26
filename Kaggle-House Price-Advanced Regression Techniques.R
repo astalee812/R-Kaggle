@@ -33,6 +33,25 @@ ggplot(train,aes(x=train$logSalePrice,fill=length(Id)))+
   xlab("Log term of House Price")+
   ylab("number of House")
 
+#現在來找看看哪個數值變相跟slaeprice會最有關聯，這時候就要用到關係矩陣(correlation matrix)
+#先找看看有幾個numeric variable
+install.packages("dplyr")
+library(dplyr)
+install.packages("plyr")
+library(plyr)
+#先找出我們有幾個numeric variable,看來有39個
+numericVar<-which(sapply(train,is.numeric))
+#把numeric variable的資料抽取出來要做correlation
+#cor的use寫pairwise.complete.obs，是做每筆的比對，同時比較兩行，只留下兩兩沒有NA的橫列
+#若用use-everything就會留下NA
+train_numVar<-train[,numericVar]
+cor_train<-cor(train_numVar,use = "pairwise.complete.obs")
+
+
+
+
+#現在要來處理資料中的dummy variable
+
 
 
 
