@@ -44,11 +44,18 @@ numericVar<-which(sapply(train,is.numeric))
 #把numeric variable的資料抽取出來要做correlation
 #cor的use寫pairwise.complete.obs，是做每筆的比對，同時比較兩行，只留下兩兩沒有NA的橫列
 #若用use-everything就會留下NA
+install.packages("corrplot")
+library(corrplot)
 train_numVar<-train[,numericVar]
 cor_train<-cor(train_numVar,use = "pairwise.complete.obs")
-
-
-
+#畫圖時間，結果...太多參數好亂
+cor_train_matrix<-corrplot.mixed(cor_train,to.col="black",tl.pos = "lt")
+#擷取一下corrlation>0.5的變數出來，並且畫成一張圖
+cor_sort<-as.matrix(sort(cor_train[,"SalePrice"],decreasing = TRUE))
+train_numVar2<-train_numVar[,c("SalePrice","OverallQual","GrLivArea","GarageCars","GarageArea","TotalBsmtSF",
+                               "X1stFlrSF","FullBath","TotRmsAbvGrd","YearBuilt","YearRemodAdd")]
+cor_train2<-cor(train_numVar2,use = "pairwise.complete.obs")
+cor_train_matrix<-corrplot.mixed(cor_train2,tl.col="black",tl.pos = "lt")
 
 #現在要來處理資料中的dummy variable
 
