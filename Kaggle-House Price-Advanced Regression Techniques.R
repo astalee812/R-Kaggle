@@ -57,8 +57,9 @@ train_numVar2<-train_numVar[,c("SalePrice","OverallQual","GrLivArea","GarageCars
 cor_train2<-cor(train_numVar2,use = "pairwise.complete.obs")
 cor_train_matrix<-corrplot.mixed(cor_train2,tl.col="black",tl.pos = "lt")
 
-#現在要來處理資料中的dummy variable
-
+#現在要來處理資料中的dummy variable，漫長的填滿因素，先來看看我們有多少要填補吧
+nacl<-which(colSums(is.na(train))>0)
+length(sort(colSums(sapply(train[,nacl], is.na)),decreasing = TRUE))
 
 
 
