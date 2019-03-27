@@ -1,7 +1,7 @@
 #先把資料讀進R裡面，要開始做EDA
 setwd("C:/Users/ASUS/Desktop/house prices predict")
-train<-read.csv("C:/Users/ASUS/Desktop/house prices predict/train.csv")
-test<-read.csv("C:/Users/ASUS/Desktop/house prices predict/test.csv")
+train<-read.csv("C:/Users/ASUS/Desktop/house prices predict/train.csv",stringsAsFactors = FALSE)
+test<-read.csv("C:/Users/ASUS/Desktop/house prices predict/test.csv",stringsAsFactors = FALSE)
 #發現test資料少一欄saleprice，把它塞進去
 test$SalePrice<-NA
 all<-rbind(train,test)
@@ -73,5 +73,13 @@ all$PoolQC<-ifelse(is.na(all$PoolQC),"None",all$PoolQC)
 
 #2 MiscFeature:雜項功能，不需要計分，並非等級的概念，發現直接跑ifelse會把其他分類變成數值，所以先轉成character
 table(all$MiscFeature)
-all$MiscFeature<-as.character(all$MiscFeature)
 all$MiscFeature<-ifelse(is.na(all$MiscFeature),"None",all$MiscFeature)
+#畫圖來了解一下有這些其他功能跟售價會不會有關係，要把變數轉成factor，不過這個變相跟預測房價好像沒啥關係
+all$MiscFeature<-as.factor(all$MiscFeature)
+ggplot(all,aes(x=MiscFeature,y=SalePrice))+
+  geom_bar(stat = "summary")+
+  geom_label(stat = "count",aes(label=..count..,y=..count..))
+
+#3 Aelly: Grvl=Gravel,Pave=Paved,NA=no alley
+all$Alley[is.na(all$Alley)]="None"
+table(all$Alley)
