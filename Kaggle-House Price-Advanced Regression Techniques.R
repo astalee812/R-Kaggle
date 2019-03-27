@@ -2,23 +2,26 @@
 setwd("C:/Users/ASUS/Desktop/house prices predict")
 train<-read.csv("C:/Users/ASUS/Desktop/house prices predict/train.csv")
 test<-read.csv("C:/Users/ASUS/Desktop/house prices predict/test.csv")
+#發現test資料少一欄saleprice，把它塞進去
+test$SalePrice<-NA
+all<-rbind(train,test)
 
 #把有遺失值的資料記錄起來，complete.case會檢查是否有遺漏值，前面加!把所有有遺漏值的資訊選取起來
 #如果沒有加!，則會把所有有包含遺漏值的資訊刪除
-missing_value<-train[!complete.cases(train),]
-#我們有1460筆的資料有遺漏值，跟原始input的比數相同
+missing_value<-all[!complete.cases(all),]
+#我們有2919筆的資料有遺漏值，跟原始input的比數相同
 nrow(missing_value)
 
-#看看train的資料型態
-str(train)
-summary(train)
+#看看all的資料型態
+str(all)
+summary(all)
 
 #來看一下SalePrice的分布是否為常態分配
-summary(train$SalePrice)
+summary(all$SalePrice)
 #看起來不妙，畫個圖清楚看看分配，發現崩潰阿!是右偏分配阿
 install.packages("ggplot2")
 library(ggplot2)
-ggplot(train,aes(x=SalePrice,fill=length(as.factor(train$Id))))+
+ggplot(all,aes(x=SalePrice,fill=length(as.factor(all$Id))))+
   geom_histogram(binwidth = 5000)+
   ggtitle("Histogram of SalePrice")+
   xlab("House Price")+
@@ -26,8 +29,8 @@ ggplot(train,aes(x=SalePrice,fill=length(as.factor(train$Id))))+
 
 #做線性回歸的一項大條件就是要為常態分配，所以我們要對我們的data做調整讓他變成常態分配
 #我要把saleprice做成對數分配，在作圖時binwidth的數值也要改小，就會變成神奇的常態分配
-train$logSalePrice<-log(train$SalePrice)
-ggplot(train,aes(x=train$logSalePrice,fill=length(Id)))+
+all$logSalePrice<-log(all$SalePrice)
+ggplot(all,aes(x=all$logSalePrice,fill=length(Id)))+
   geom_histogram(binwidth = 0.05)+
   ggtitle("Histogram of LogSalePrice")+
   xlab("Log term of House Price")+
@@ -40,26 +43,35 @@ library(dplyr)
 install.packages("plyr")
 library(plyr)
 #先找出我們有幾個numeric variable,看來有39個
-numericVar<-which(sapply(train,is.numeric))
+numericVar<-which(sapply(all,is.numeric))
 #把numeric variable的資料抽取出來要做correlation
 #cor的use寫pairwise.complete.obs，是做每筆的比對，同時比較兩行，只留下兩兩沒有NA的橫列
 #若用use-everything就會留下NA
 install.packages("corrplot")
 library(corrplot)
-train_numVar<-train[,numericVar]
-cor_train<-cor(train_numVar,use = "pairwise.complete.obs")
+all_numVar<-all[,numericVar]
+cor_all<-cor(all_numVar,use = "pairwise.complete.obs")
 #畫圖時間，結果...太多參數好亂
-cor_train_matrix<-corrplot.mixed(cor_train,to.col="black",tl.pos = "lt")
+cor_all_matrix<-corrplot.mixed(cor_all,to.col="black",tl.pos = "lt")
 #擷取一下corrlation>0.5的變數出來，並且畫成一張圖
-cor_sort<-as.matrix(sort(cor_train[,"SalePrice"],decreasing = TRUE))
-train_numVar2<-train_numVar[,c("SalePrice","OverallQual","GrLivArea","GarageCars","GarageArea","TotalBsmtSF",
+cor_sort<-as.matrix(sort(cor_all[,"SalePrice"],decreasing = TRUE))
+all_numVar2<-all_numVar[,c("SalePrice","OverallQual","GrLivArea","GarageCars","GarageArea","TotalBsmtSF",
                                "X1stFlrSF","FullBath","TotRmsAbvGrd","YearBuilt","YearRemodAdd")]
-cor_train2<-cor(train_numVar2,use = "pairwise.complete.obs")
-cor_train_matrix<-corrplot.mixed(cor_train2,tl.col="black",tl.pos = "lt")
+cor_all2<-cor(all_numVar2,use = "pairwise.complete.obs")
+cor_all_matrix<-corrplot.mixed(cor_all2,tl.col="black",tl.pos = "lt")
 
 #現在要來處理資料中的dummy variable，漫長的填滿因素，先來看看我們有多少要填補吧
-nacl<-which(colSums(is.na(train))>0)
-length(sort(colSums(sapply(train[,nacl], is.na)),decreasing = TRUE))
+#因為test資料沒有saleprice跟logsaleprice，所以我們有34個變相要處理
+nacl<-which(colSums(is.na(all))>0)
+sort(colSums(sapply(all[,nacl], is.na)),decreasing = TRUE)
+length(sort(colSums(sapply(all[,nacl], is.na)),decreasing = TRUE))
 
+#1 PoolQC:游泳池的品質，EX=Excellent,Gd=Good,TA=Average,FA=fair,NA=nopool，我需要把這些變成數值
+table(all$PoolQC)
+all$PoolQC<-ifelse(all$PoolQC=="Ex",5,ifelse(all$PoolQC=="Gd",4,ifelse(all$PoolQC=="Ta",3,ifelse(all$PoolQC=="Fa",2,all$PoolQC))))
+all$PoolQC<-ifelse(is.na(all$PoolQC),"None",all$PoolQC)
 
-
+#2 MiscFeature:雜項功能，不需要計分，並非等級的概念
+table(all$MiscFeature)
+all$MiscFeature<-as.character(all$MiscFeature)
+all$MiscFeature<-ifelse(is.na(all$MiscFeature),"None",all$MiscFeature)
