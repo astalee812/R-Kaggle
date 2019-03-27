@@ -71,15 +71,17 @@ table(all$PoolQC)
 all$PoolQC<-ifelse(all$PoolQC=="Ex",5,ifelse(all$PoolQC=="Gd",4,ifelse(all$PoolQC=="Ta",3,ifelse(all$PoolQC=="Fa",2,all$PoolQC))))
 all$PoolQC<-ifelse(is.na(all$PoolQC),"None",all$PoolQC)
 
-#2 MiscFeature:雜項功能，不需要計分，並非等級的概念，發現直接跑ifelse會把其他分類變成數值，所以先轉成character
+#2 MiscFeature:雜項功能，不需要計分，並非等級的概念
 table(all$MiscFeature)
 all$MiscFeature<-ifelse(is.na(all$MiscFeature),"None",all$MiscFeature)
-#畫圖來了解一下有這些其他功能跟售價會不會有關係，要把變數轉成factor，不過這個變相跟預測房價好像沒啥關係
+#畫圖來了解一下有這些其他功能跟售價會不會有關係，不過這個變相跟預測房價好像沒啥關係
 all$MiscFeature<-as.factor(all$MiscFeature)
 ggplot(all,aes(x=MiscFeature,y=SalePrice))+
   geom_bar(stat = "summary")+
   geom_label(stat = "count",aes(label=..count..,y=..count..))
 
-#3 Aelly: Grvl=Gravel,Pave=Paved,NA=no alley
+#3 Aelly: Grvl=Gravel,Pave=Paved,NA=no alley，不需要計分，並非等級的概念
 all$Alley[is.na(all$Alley)]="None"
 table(all$Alley)
+
+#4 Fence:圍欄質量，不需要計分，並非等級的概念，GdPrv=good privacy,MnPrv=minimun privacy,GdWo=good wood,MnWw=minimun wood/wire,NA=no fence
