@@ -71,7 +71,7 @@ table(all$PoolQC)
 all$PoolQC<-ifelse(all$PoolQC=="Ex",5,ifelse(all$PoolQC=="Gd",4,ifelse(all$PoolQC=="Ta",3,ifelse(all$PoolQC=="Fa",2,all$PoolQC))))
 all$PoolQC<-ifelse(is.na(all$PoolQC),"None",all$PoolQC)
 
-#2 MiscFeature:雜項功能，不需要計分，並非等級的概念
+#2 MiscFeature:雜項功能，不需要計分，並非等級的概念，發現直接跑ifelse會把其他分類變成數值，所以先轉成character
 table(all$MiscFeature)
 all$MiscFeature<-as.character(all$MiscFeature)
 all$MiscFeature<-ifelse(is.na(all$MiscFeature),"None",all$MiscFeature)
