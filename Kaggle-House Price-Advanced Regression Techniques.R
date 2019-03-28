@@ -126,5 +126,34 @@ all$GarageType[2577]<-"None"
 all$GarageCars[2577]<-0
 all$GarageArea[2577]<-0
 
-#7 地下室相關變相，這邊也是很詭異，NA值都不太一樣
+#7 地下室相關變相，這邊也是很詭異，NA值都不太一樣，先找出都是NA的正常地下室數值，一共有79個沒地下室的
+length(which(is.na(all$BsmtQual)&is.na(all$BsmtCond)&is.na(all$BsmtExposure)&is.na(all$BsmtFinType1)&is.na(all$BsmtFinType2)))
+#現在要找出錯誤的NA值，使用條件有na都抓出來，|=或
+all[!is.na(all$BsmtFinType1) & (is.na(all$BsmtCond)|is.na(all$BsmtQual)|is.na(all$BsmtExposure)|is.na(all$BsmtFinType2)), c('BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinType2')]
+#因為這些數值看來都是有地下室的，而地下室的其他數值就沒有填補完成，用該變相中最常出現的資料填補進去
+#第333列的bsmtfintype2處理
+sort(table(all$BsmtFinType2),decreasing = TRUE)
+all$BsmtFinType2[333]<-"Unf"
+#第949,1488,2349列的bsmtexposue
+sort(table(all$BsmtExposure),decreasing = TRUE)
+all$BsmtExposure[c(949,1488,2349)]<-"No"
+#第2041,2186,2525的bsmtcond
+sort(table(all$BsmtCond),decreasing = TRUE)
+all$BsmtCond[c(2041,2186,2525)]<-"TA"
+#第2218,2219的bsmtqual
+sort(table(all$BsmtQual),decreasing = TRUE)
+all$BsmtQual[c(2218,2219)]<-"TA"
 
+#處理完畢之後我們來處理等級傳換成數字
+table(all$BsmtCond)
+all$BsmtCond[is.na(all$BsmtCond)]<-"None"
+all$BsmtCond<-as.integer(revalue(all$BsmtCond,Qualities))
+
+table(all$BsmtQual)
+all$BsmtQual[is.na(all$BsmtQual)]<-"None"
+all$BsmtQual<-as.integer(revalue(all$BsmtQual,Qualities))
+
+table(all$BsmtExposure)
+all$BsmtExposure[is.na(all$BsmtExposure)]<-"None"
+exposure<-c("Gd"=4,"Av"=3,"Mn"=2,"No"=1,"None"=0)
+all$BsmtExposure<-as.integer(revalue(all$BsmtExposure,exposure))
