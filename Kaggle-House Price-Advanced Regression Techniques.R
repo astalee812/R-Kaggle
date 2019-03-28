@@ -100,11 +100,21 @@ table(all$FireplaceQu)
 all$LotFrontage[is.na(all$LotFrontage)]<-0
 table(all$LotFrontage)
 
-#6 GarageYtBlt: 車庫的興建年分，NA可以看成他沒有車庫，同樣的這159個資料有關車庫的都會是NA
+#6 GarageYtBlt: 車庫的興建年分，NA可以看成他沒有車庫，同樣的這159個資料有關車庫的都會是NA，要檢查是否為等級的變相
 all$GarageYrBlt[is.na(all$GarageYrBlt)]<-0
+
 all$GarageFinish[is.na(all$GarageFinish)]<-"None"
+finish<-c("Fin"=3,"RFn"=2,"Unf"=1,"None"=0)
+all$GarageFinish<-as.integer(revalue(all$GarageFinish,finish))
+table(all$GarageFinish)
+
 all$GarageQual[is.na(all$GarageQual)]<-"None"
+all$GarageQual<-as.integer(revalue(all$GarageQual,Qualities))
+table(all$GarageQual)
+
 all$GarageCond[is.na(all$GarageCond)]<-"None"
+all$GarageCond<-as.integer(revalue(all$GarageCond,Qualities))
+table(all$GarageCond)
 
 #這邊有點怪怪的，garagetype有157個，但應該要有159個，而garagecars.graragearea都只有1個NA，還都是2577列
 all$GarageType[is.na(all$GarageType)]<-"None"
@@ -115,4 +125,6 @@ all[2577,]
 all$GarageType[2577]<-"None"
 all$GarageCars[2577]<-0
 all$GarageArea[2577]<-0
+
+#7 地下室相關變相，這邊也是很詭異，NA值都不太一樣
 
