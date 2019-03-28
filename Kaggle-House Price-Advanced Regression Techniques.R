@@ -85,3 +85,34 @@ all$Alley[is.na(all$Alley)]="None"
 table(all$Alley)
 
 #4 Fence:圍欄質量，不需要計分，並非等級的概念，GdPrv=good privacy,MnPrv=minimun privacy,GdWo=good wood,MnWw=minimun wood/wire,NA=no fence
+all$Fence[is.na(all$Fence)] <- "None"
+table(all$Fence)
+
+#5 FireplaceQu: 防火的數量，他是一個等級的概念，所以我要把它轉換為數值
+#Ex=Excellent，Gd=good，TA=Average，Fa=Fair，Po=poor，NA=no fireplace
+all$FireplaceQu[is.na(all$FireplaceQu)]<-"None"
+table(all$FireplaceQu)
+Qualities
+all$FireplaceQu<-as.integer(revalue(all$FireplaceQu,Qualities))
+table(all$FireplaceQu)
+
+#5 LotFrontage: NA=0，我其實看不太懂這個變相
+all$LotFrontage[is.na(all$LotFrontage)]<-0
+table(all$LotFrontage)
+
+#6 GarageYtBlt: 車庫的興建年分，NA可以看成他沒有車庫，同樣的這159個資料有關車庫的都會是NA
+all$GarageYrBlt[is.na(all$GarageYrBlt)]<-0
+all$GarageFinish[is.na(all$GarageFinish)]<-"None"
+all$GarageQual[is.na(all$GarageQual)]<-"None"
+all$GarageCond[is.na(all$GarageCond)]<-"None"
+
+#這邊有點怪怪的，garagetype有157個，但應該要有159個，而garagecars.graragearea都只有1個NA，還都是2577列
+all$GarageType[is.na(all$GarageType)]<-"None"
+which(is.na(all$GarageCars))
+which(is.na(all$GarageArea))
+#把2577列的資料叫出來，發現在車庫類型上市detchd，所以我需要調整一下2577列的資料
+all[2577,]
+all$GarageType[2577]<-"None"
+all$GarageCars[2577]<-0
+all$GarageArea[2577]<-0
+
