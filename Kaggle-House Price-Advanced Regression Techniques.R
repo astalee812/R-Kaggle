@@ -180,3 +180,48 @@ all$BsmtFinSF1[is.na(all$BsmtFinSF1)]<-0
 all$BsmtFinSF2[is.na(all$BsmtFinSF2)]<-0
 all$BsmtUnfSF[is.na(all$BsmtUnfSF)]<-0
 all$TotalBsmtSF[is.na(all$TotalBsmtSF)]<-0
+
+#8 Masvnrtype:我不知道這是啥，某種貼磁磚的，但MasVnrType應該要與MasVnrArea相同，來看看發生了什麼事情
+length(which(is.na(all$MasVnrType)&is.na(all$MasVnrArea)))
+all[is.na(all$MasVnrType)&!is.na(all$MasVnrArea),c("MasVnrType","MasVnrArea")]
+#針對2611列做調整，選取第二個Brkface做填入
+sort(table(all$MasVnrType),decreasing = TRUE)
+all$MasVnrType[2611]<-"BrkFace"
+#MasVnrType是有分等級的!用價格的中位數來看
+all$MasVnrType[is.na(all$MasVnrType)] <- "None"
+install.packages("magrittr")
+library(magrittr)
+all[!is.na(all$SalePrice),] %>% group_by(MasVnrType) %>% summarise(median = median(SalePrice)) %>% arrange(median)
+#發現none比brkcmn的價格還高，我們來看一下是不是交易比數太少的關係
+all[!is.na(all$SalePrice),] %>% group_by(MasVnrType) %>% summarise(median = median(SalePrice), counts=n()) %>% arrange(median)
+#確定是因為brkcmn交易比數太少的關係，開始做轉換數值
+Masonry <- c("None"=0, "BrkCmn"=0, "BrkFace"=1, "Stone"=2)
+all$MasVnrType<-as.integer(revalue(all$MasVnrType,Masonry))
+table(all$MasVnrType)
+
+all$MasVnrArea[is.na(all$MasVnrArea)]<-0
+
+#9  MSZoning: 分區的變相，不用做數字轉換
+sort(table(all$MSZoning),decreasing = TRUE)
+all$MSZoning[is.na(all$MSZoning)]<-"RL"
+table(all$MSZoning)
+all$MSZoning<-as.factor(all$MSZoning)
+
+#10 Utilities 設備
+table(all$Utilities)
+which(is.na(all$Utilities))
+all$Utilities[is.na(all$Utilities)]<-"AllPub"
+
+#11 Functional 房屋功能評估，一看就知道是等級的，要乖乖轉換數值
+table(all$Functional)
+sort(table(all$Functional),decreasing = TRUE)
+all$Functional[is.na(all$Functional)]<-"Typ"
+fuction<-c("Typ"=7,"Min1"=6,"Min2"=5,"Mod"=4,"Maj1"=3,"Maj2"=2,"Sev"=1,"Sal"=0)
+all$Functional<-as.integer(revalue(all$Functional,fuction))
+
+#12 Exterior1 外牆材料1
+sort(table(all$Exterior1st),decreasing = TRUE)
+all$Exterior1st[is.na(all$Exterior1st)]<-"VinylSd"
+all$Exterior1st<-as.factor(all$Exterior1st)
+
+#
