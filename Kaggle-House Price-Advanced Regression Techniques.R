@@ -245,3 +245,9 @@ sort(table(all$KitchenQual),decreasing = TRUE)
 all$KitchenQual[is.na(all$KitchenQual)]<-"TA"
 all$KitchenQual<-as.integer(revalue(all$KitchenQual,Qualities))
 table(all$KitchenQual)
+
+#15 Saletype
+sort(table(all$SaleType),decreasing = TRUE)
+all$SaleType[is.na(all$SaleType)]<-"WD"
+all$SaleType<-as.factor(all$SaleType)
+all$SaleCondition<-as.factor(all$SaleCondition)
