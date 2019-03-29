@@ -219,9 +219,29 @@ all$Functional[is.na(all$Functional)]<-"Typ"
 fuction<-c("Typ"=7,"Min1"=6,"Min2"=5,"Mod"=4,"Maj1"=3,"Maj2"=2,"Sev"=1,"Sal"=0)
 all$Functional<-as.integer(revalue(all$Functional,fuction))
 
-#12 Exterior1 外牆材料1
+#12 Exterior1 外牆相關變相
 sort(table(all$Exterior1st),decreasing = TRUE)
 all$Exterior1st[is.na(all$Exterior1st)]<-"VinylSd"
 all$Exterior1st<-as.factor(all$Exterior1st)
+#Exterior2 外牆材料2
+sort(table(all$Exterior2nd),decreasing = TRUE)
+all$Exterior2nd[is.na(all$Exterior2nd)]<-"VinylSd"
+all$Exterior2nd<-as.factor(all$Exterior2nd)
+#ExterQual 外牆品質，要換數值
+all$ExterQual<-as.integer(revalue(all$ExterQual,Qualities))
+table(all$ExterQual)
+#ExterCond 外牆狀況，要換數值
+all$ExterCond<-as.integer(revalue(all$ExterCond,Qualities))
+table(all$ExterCond)
 
-#
+#13 Electrical 電子系統
+sort(table(all$Electrical),decreasing = TRUE)
+all$Electrical[is.na(all$Electrical)]<-"SBrkr"
+all$Electrical<-as.factor(all$Electrical)
+table(all$Electrical)
+
+#14 KitchenQual 廚房品質
+sort(table(all$KitchenQual),decreasing = TRUE)
+all$KitchenQual[is.na(all$KitchenQual)]<-"TA"
+all$KitchenQual<-as.integer(revalue(all$KitchenQual,Qualities))
+table(all$KitchenQual)
