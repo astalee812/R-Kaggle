@@ -322,3 +322,7 @@ mssubclassname<-c("20"="1-STORY 1946 & NEWER ALL STYLES","30"="1-STORY 1945 & OL
                   "190"="2 FAMILY CONVERSION - ALL STYLES AND AGES")
 all$MSSubClass<-revalue(all$MSSubClass,mssubclassname)
 str(all$MSSubClass)
+
+#來看一下整體資料的狀況，我有56個數值變數跟25個類別變數
+length(which(sapply(all, is.numeric)))
+length(which(sapply(all, is.factor)))
