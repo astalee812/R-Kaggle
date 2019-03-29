@@ -68,12 +68,15 @@ length(sort(colSums(sapply(all[,nacl], is.na)),decreasing = TRUE))
 
 #1 PoolQC:游泳池的品質，EX=Excellent,Gd=Good,TA=Average,FA=fair,NA=nopool，我需要把這些變成數值
 table(all$PoolQC)
-all$PoolQC<-ifelse(all$PoolQC=="Ex",5,ifelse(all$PoolQC=="Gd",4,ifelse(all$PoolQC=="Ta",3,ifelse(all$PoolQC=="Fa",2,all$PoolQC))))
-all$PoolQC<-ifelse(is.na(all$PoolQC),"None",all$PoolQC)
+Qualities <- c('None' = 0, 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)
+all$PoolQC[is.na(all$PoolQC)]<-"None"
+all$PoolQC<-as.integer(revalue(all$PoolQC,Qualities))
 
 #2 MiscFeature:雜項功能，不需要計分，並非等級的概念
 table(all$MiscFeature)
-all$MiscFeature<-ifelse(is.na(all$MiscFeature),"None",all$MiscFeature)
+all$MiscFeature[is.na(all$MiscFeature)]<-"None"
+all$MiscFeature<-as.factor(all$MiscFeature)
+
 #畫圖來了解一下有這些其他功能跟售價會不會有關係，不過這個變相跟預測房價好像沒啥關係
 all$MiscFeature<-as.factor(all$MiscFeature)
 ggplot(all,aes(x=MiscFeature,y=SalePrice))+
@@ -83,10 +86,12 @@ ggplot(all,aes(x=MiscFeature,y=SalePrice))+
 #3 Aelly: Grvl=Gravel,Pave=Paved,NA=no alley，不需要計分，並非等級的概念
 all$Alley[is.na(all$Alley)]="None"
 table(all$Alley)
+all$Alley<-as.factor(all$Alley)
 
 #4 Fence:圍欄質量，不需要計分，並非等級的概念，GdPrv=good privacy,MnPrv=minimun privacy,GdWo=good wood,MnWw=minimun wood/wire,NA=no fence
 all$Fence[is.na(all$Fence)] <- "None"
 table(all$Fence)
+all$Fence<-as.factor(all$Fence)
 
 #5 FireplaceQu: 防火的數量，他是一個等級的概念，所以我要把它轉換為數值
 #Ex=Excellent，Gd=good，TA=Average，Fa=Fair，Po=poor，NA=no fireplace
@@ -99,23 +104,28 @@ table(all$FireplaceQu)
 #5 LotFrontage: NA=0，我其實看不太懂這個變相
 all$LotFrontage[is.na(all$LotFrontage)]<-0
 table(all$LotFrontage)
+all$LotFrontage<as.integer(all$LotFrontage)
+#LotShape要轉換成數值
+all$LotShape<-as.integer(revalue(all$LotShape,c("Reg"=3,"IR1"=2,"IR2"=1,"IR3"=0)))
+table(all$LotShape)
+#LotConfig 要轉換成factor
+all$LotConfig <- as.factor(all$LotConfig)
 
 #6 GarageYtBlt: 車庫的興建年分，NA可以看成他沒有車庫，同樣的這159個資料有關車庫的都會是NA，要檢查是否為等級的變相
 all$GarageYrBlt[is.na(all$GarageYrBlt)]<-0
-
+#GarageFinish
 all$GarageFinish[is.na(all$GarageFinish)]<-"None"
 finish<-c("Fin"=3,"RFn"=2,"Unf"=1,"None"=0)
 all$GarageFinish<-as.integer(revalue(all$GarageFinish,finish))
 table(all$GarageFinish)
-
+#GarageQual
 all$GarageQual[is.na(all$GarageQual)]<-"None"
 all$GarageQual<-as.integer(revalue(all$GarageQual,Qualities))
 table(all$GarageQual)
-
+#GarageCond
 all$GarageCond[is.na(all$GarageCond)]<-"None"
 all$GarageCond<-as.integer(revalue(all$GarageCond,Qualities))
 table(all$GarageCond)
-
 #這邊有點怪怪的，garagetype有157個，但應該要有159個，而garagecars.graragearea都只有1個NA，還都是2577列
 all$GarageType[is.na(all$GarageType)]<-"None"
 which(is.na(all$GarageCars))
@@ -125,6 +135,8 @@ all[2577,]
 all$GarageType[2577]<-"None"
 all$GarageCars[2577]<-0
 all$GarageArea[2577]<-0
+all$GarageType<-as.factor(all$GarageType)
+
 
 #7 地下室相關變相，這邊也是很詭異，NA值都不太一樣，先找出都是NA的正常地下室數值，一共有79個沒地下室的
 length(which(is.na(all$BsmtQual)&is.na(all$BsmtCond)&is.na(all$BsmtExposure)&is.na(all$BsmtFinType1)&is.na(all$BsmtFinType2)))
@@ -148,33 +160,33 @@ all$BsmtQual[c(2218,2219)]<-"TA"
 table(all$BsmtCond)
 all$BsmtCond[is.na(all$BsmtCond)]<-"None"
 all$BsmtCond<-as.integer(revalue(all$BsmtCond,Qualities))
-
+#BsmtQual
 table(all$BsmtQual)
 all$BsmtQual[is.na(all$BsmtQual)]<-"None"
 all$BsmtQual<-as.integer(revalue(all$BsmtQual,Qualities))
-
+#BsmtExposure
 table(all$BsmtExposure)
 all$BsmtExposure[is.na(all$BsmtExposure)]<-"None"
 exposure<-c("Gd"=4,"Av"=3,"Mn"=2,"No"=1,"None"=0)
 all$BsmtExposure<-as.integer(revalue(all$BsmtExposure,exposure))
-
+#BsmtFinType1
 table(all$BsmtFinType1)
 all$BsmtFinType1[is.na(all$BsmtFinType1)]<-"None"
 fintype<-c("GLQ"=6,"ALQ"=5,"BLQ"=4,"Rec"=3,"LwQ"=2,"Unf"=1,"None"=0)
 all$BsmtFinType1<-as.integer(revalue(all$BsmtFinType1,fintype))
-
+#BsmtFinType2
 table(all$BsmtFinType2)
 all$BsmtFinType2[is.na(all$BsmtFinType2)]<-"None"
 all$BsmtFinType2<-as.integer(revalue(all$BsmtFinType2,fintype))
-
+#BsmtFullBath
 which(is.na(all$BsmtFullBath))
 all$BsmtFullBath[is.na(all$BsmtFullBath)]<-0
 table(all$BsmtFullBath)
-
+#BsmtHalfBath
 which(is.na(all$BsmtHalfBath))
 all$BsmtHalfBath[is.na(all$BsmtHalfBath)]<-0
 table(all$BsmtHalfBath)
-
+#BsmtFinSF1
 which(is.na(all$BsmtFinSF1))
 all$BsmtFinSF1[is.na(all$BsmtFinSF1)]<-0
 all$BsmtFinSF2[is.na(all$BsmtFinSF2)]<-0
@@ -211,6 +223,7 @@ all$MSZoning<-as.factor(all$MSZoning)
 table(all$Utilities)
 which(is.na(all$Utilities))
 all$Utilities[is.na(all$Utilities)]<-"AllPub"
+all$Utilities<-as.factor(all$Utilities)
 
 #11 Functional 房屋功能評估，一看就知道是等級的，要乖乖轉換數值
 table(all$Functional)
@@ -251,3 +264,61 @@ sort(table(all$SaleType),decreasing = TRUE)
 all$SaleType[is.na(all$SaleType)]<-"WD"
 all$SaleType<-as.factor(all$SaleType)
 all$SaleCondition<-as.factor(all$SaleCondition)
+
+#來看一下資料的型態，看看我們有沒有漏掉什麼，還有15個變相阿.....
+str(all)
+Charcol<-names(all[,sapply(all,is.character)])
+Charcol
+#LandContour
+all$LandContour <- as.factor(all$LandContour)
+#LandSlope
+table(all$LandSlope)
+all$LandSlope<-as.integer(revalue(all$LandSlope, c("Gtl"=2,"Mod"=1,"Sev"=0)))
+#Roofstyle
+all$RoofStyle <- as.factor(all$RoofStyle)
+#RoofMatl
+all$RoofMatl <- as.factor(all$RoofMatl)
+#Foundation
+all$Foundation<-as.factor(all$Foundation)
+#Heating
+all$Heating <- as.factor(all$Heating)
+#HeatingQC，這傢伙要轉換數值
+table(all$HeatingQC)
+all$HeatingQC<-as.integer(revalue(all$HeatingQC,Qualities))
+#CentralAir，轉換數值
+table(all$CentralAir)
+all$CentralAir<-as.integer(revalue(all$CentralAir,c("Y"=1,"N"=0)))
+#street
+table(all$Street)
+all$Street<-as.integer(revalue(all$Street, c("Pave"=1,"Grvl"=0)))
+#Neighborhood
+table(all$Neighborhood)
+all$Neighborhood<-as.factor(all$Neighborhood)
+#condition1
+table(all$Condition1)
+all$Condition1<-as.factor(all$Condition1)
+#condition2
+table(all$Condition2)
+all$Condition2<-as.factor(all$Condition2)
+#BldgType
+table(all$BldgType)
+all$BldgType<-as.factor(all$BldgType)
+#housetype
+table(all$HouseStyle)
+all$HouseStyle<-as.factor(all$HouseStyle)
+#PavedDrive
+table(all$PavedDrive)
+all$PavedDrive<-as.integer(revalue(all$PavedDrive, c("Y"=2,"P"=1,"N"=0)))
+
+all$MoSold<-as.factor(all$MoSold)
+all$YrSold<-as.factor(all$YrSold)
+all$MSSubClass<-as.factor(all$MSSubClass)
+table(all$MSSubClass)
+mssubclassname<-c("20"="1-STORY 1946 & NEWER ALL STYLES","30"="1-STORY 1945 & OLDER","40"="1-STORY W/FINISHED ATTIC ALL AGES",
+                  "45"="1-1/2 STORY - UNFINISHED ALL AGES","50"="1-1/2 STORY FINISHED ALL AGES","60"="2-STORY 1946 & NEWER",
+                  "70"="2-STORY 1945 & OLDER","75"="2-1/2 STORY ALL AGES","80"="SPLIT OR MULTI-LEVEL","85"="SPLIT FOYER",
+                  "90"="DUPLEX - ALL STYLES AND AGES","120"="1-STORY PUD (Planned Unit Development) - 1946 & NEWER",
+                  "150"="1-1/2 STORY PUD - ALL AGES","160"="2-STORY PUD - 1946 & NEWER","180"="PUD - MULTILEVEL - INCL SPLIT LEV/FOYER",
+                  "190"="2 FAMILY CONVERSION - ALL STYLES AND AGES")
+all$MSSubClass<-revalue(all$MSSubClass,mssubclassname)
+str(all$MSSubClass)
