@@ -27,15 +27,6 @@ ggplot(all,aes(x=SalePrice,fill=length(as.factor(all$Id))))+
   xlab("House Price")+
   ylab("number of House")
 
-#做線性回歸的一項大條件就是要為常態分配，所以我們要對我們的data做調整讓他變成常態分配
-#我要把saleprice做成對數分配，在作圖時binwidth的數值也要改小，就會變成神奇的常態分配
-all$logSalePrice<-log(all$SalePrice)
-ggplot(all,aes(x=all$logSalePrice,fill=length(Id)))+
-  geom_histogram(binwidth = 0.05)+
-  ggtitle("Histogram of LogSalePrice")+
-  xlab("Log term of House Price")+
-  ylab("number of House")
-
 #現在來找看看哪個數值變相跟slaeprice會最有關聯，這時候就要用到關係矩陣(correlation matrix)
 #先找看看有幾個numeric variable
 install.packages("dplyr")
@@ -325,4 +316,46 @@ str(all$MSSubClass)
 
 #來看一下整體資料的狀況，我有56個數值變數跟25個類別變數
 length(which(sapply(all, is.numeric)))
+numericVars <- which(sapply(all, is.numeric))
 length(which(sapply(all, is.factor)))
+factorVars <- which(sapply(all, is.factor))
+
+#針對numeric再做一次迴歸分析
+all_numVar<-all[,numericVars]
+cor_numVar<-cor(all_numVar,use = "pairwise.complete.obs")
+cor_sorted<-as.matrix(sort(cor_numVar[,"SalePrice"],decreasing = TRUE))
+cor_sorted
+corrplot.mixed(cor_numVar,to.col="black",tl.pos = "lt")
+name1<-c("OverallQual","GrLivArea","ExterQual","KitchenQual","GarageCars","GarageArea","TotalBsmtSF","X1stFlrSF","BsmtQual","FullBath",
+"GarageFinish","TotRmsAbvGrd","YearBuilt","FireplaceQu","YearRemodAdd")
+cor_numVar2<-cor_numVar[name1,name1]
+corrplot.mixed(cor_numVar2,tl.col="black", tl.pos = "lt", tl.cex = 0.7,cl.cex = .7, number.cex=.7)
+
+#終於我們要來預測了
+#做線性回歸的一項大條件就是要為常態分配，所以我們要對我們的data做調整讓他變成常態分配
+#我要把saleprice做成對數分配，在作圖時binwidth的數值也要改小，就會變成神奇的常態分配
+all$logSalePrice<-log(all$SalePrice)
+ggplot(all,aes(x=all$logSalePrice,fill=length(Id)))+
+  geom_histogram(binwidth = 0.05)+
+  ggtitle("Histogram of LogSalePrice")+
+  xlab("Log term of House Price")+
+  ylab("number of House")
+
+#設定訓練跟測驗的資料集
+train1 <- all[!is.na(all$SalePrice),]
+test1 <- all[is.na(all$SalePrice),]
+lm_model_15 <- lm(SalePrice ~ ., data=train1)
+summary(lm_model_15)
+
+#A Linear Model
+lm_model_15 <- lm(SalePrice ~ MSZoning+OverallQual+ExterQual+KitchenQual+GarageCars+LotArea+BsmtUnfSF+TotalBsmtSF+Condition2+
+                    X1stFlrSF+X2ndFlrSF+BsmtCond+FullBath+GarageFinish+TotRmsAbvGrd+YearBuilt+FireplaceQu+YearRemodAdd+Neighborhood+
+                    HouseStyle+RoofMatl+MasVnrArea+BsmtExposure+BsmtFinSF1+CentralAir+BedroomAbvGr+PoolQC+Fence
+                   , data=train1)
+summary(lm_model_15)
+prediction <- predict(lm_model_15, test1, type="response")
+write.csv(prediction,file = "house predicion.csv")
+
+
+
+
