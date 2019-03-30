@@ -377,17 +377,21 @@ cor(all$SalePrice, all$TotalPorchSF, use= "pairwise.complete.obs")
 all <- all[-c(524, 1299),]
 
 #找出真正的numeric variable
+all$SalePrice<-as.numeric(all$SalePrice)
 numericVars <- which(sapply(all, is.numeric))
 numericVarNames <- names(numericVars)
 numericVarNames <- numericVarNames[!(numericVarNames %in% c('MSSubClass', 'MoSold', 'YrSold', 'SalePrice', 'OverallQual', 'OverallCond'))]
+numericVarNames <- append(numericVarNames, c('Age', 'TotalPorchSF', 'TotBathrooms', 'TotalSqFeet'))
 DFnumeric <- all[, names(all) %in% numericVarNames]
+
 DFfactors <- all[, !(names(all) %in% numericVarNames)]
 DFfactors <- DFfactors[, names(DFfactors) != 'SalePrice']
 
 length(DFnumeric)
 length(DFfactors)
 
-#做預測的一項大條件就是要為常態分配，所以我們要對我們的data做調整讓他變成常態分配
+
+#要來修正一下所有數值變相的偏態(只要偏態係數>0.8就要做對數調整)
 install.packages("psych")
 library(psych)
 for(i in 1:ncol(DFnumeric)){
@@ -420,6 +424,36 @@ dim(DFdummies)
 #把dummy跟數值變相的資料和在一起
 combined <- cbind(DFnorm, DFdummies)
 
+#看一下saleprice的偏態，偏態係數=1.877427，要做對數調整
+skew(all$SalePrice)
+all$SalePrice <- log(all$SalePrice)
+skew(all$SalePrice)
+#接下來要把資料分成訓練集跟測試集
+train1<-combined[!is.na(all$SalePrice),]
+test1<-combined[is.na(all$SalePrice),]
 
+#Lasso regression model:先設定隨機數，然後開始製作參數
+set.seed(27042018)
+#traincontrol函數產生的參數是為了要去控制用可能的值去建立模型
+#method表示抽樣方法，number表示跌代次數或者交叉驗證的數目
+my_control <-trainControl(method="cv", number=5)
+#做交叉驗證，列出所有可能性的列表
+lassoGrid <- expand.grid(alpha = 1, lambda = seq(0.001,0.1,by = 0.0005))
+#建立lasso模型
+lasso_mod <- train(x=train1, y=all$SalePrice[!is.na(all$SalePrice)], method='glmnet', trControl= my_control, tuneGrid=lassoGrid) 
+lasso_mod$bestTune
+#把lasso模型中的最小RMSE抓出來，看看模型的效果如何
+min(lasso_mod$results$RMSE)
+#VarImp是用來計算特徵重要性
+lassoVarImp <- varImp(lasso_mod,scale=F)
+lassoImportance <- lassoVarImp$importance
+#選取重要的特徵
+varsSelected <- length(which(lassoImportance$Overall!=0))
+varsNotSelected <- length(which(lassoImportance$Overall==0))
+#做出預測!!然後把預測的結果撈出來看一下
+LassoPred <- predict(lasso_mod, test1)
+predictions_lasso <- exp(LassoPred)
+head(predictions_lasso)
 
+write.csv(predictions_lasso,file = "predition_lasso.csv")
 
