@@ -5,7 +5,7 @@ test<-read.csv("C:/Users/ASUS/Desktop/house prices predict/test.csv",stringsAsFa
 #發現test資料少一欄saleprice，把它塞進去
 test$SalePrice<-NA
 all<-rbind(train,test)
-
+all1<-rbind(train,test)
 #把有遺失值的資料記錄起來，complete.case會檢查是否有遺漏值，前面加!把所有有遺漏值的資訊選取起來
 #如果沒有加!，則會把所有有包含遺漏值的資訊刪除
 missing_value<-all[!complete.cases(all),]
@@ -302,7 +302,7 @@ table(all$PavedDrive)
 all$PavedDrive<-as.integer(revalue(all$PavedDrive, c("Y"=2,"P"=1,"N"=0)))
 
 all$MoSold<-as.factor(all$MoSold)
-all$YrSold<-as.factor(all$YrSold)
+all$MoSold<-as.factor(all$YrSold)
 all$MSSubClass<-as.factor(all$MSSubClass)
 table(all$MSSubClass)
 mssubclassname<-c("20"="1-STORY 1946 & NEWER ALL STYLES","30"="1-STORY 1945 & OLDER","40"="1-STORY W/FINISHED ATTIC ALL AGES",
@@ -331,30 +331,94 @@ name1<-c("OverallQual","GrLivArea","ExterQual","KitchenQual","GarageCars","Garag
 cor_numVar2<-cor_numVar[name1,name1]
 corrplot.mixed(cor_numVar2,tl.col="black", tl.pos = "lt", tl.cex = 0.7,cl.cex = .7, number.cex=.7)
 
-#終於我們要來預測了
-#做線性回歸的一項大條件就是要為常態分配，所以我們要對我們的data做調整讓他變成常態分配
-#我要把saleprice做成對數分配，在作圖時binwidth的數值也要改小，就會變成神奇的常態分配
-all$logSalePrice<-log(all$SalePrice)
-ggplot(all,aes(x=all$logSalePrice,fill=length(Id)))+
-  geom_histogram(binwidth = 0.05)+
-  ggtitle("Histogram of LogSalePrice")+
-  xlab("Log term of House Price")+
-  ylab("number of House")
+#有些數值可以互相加總
+#total number of bathrooms
+all$TotalBathrooms<-all$FullBath+(all$HalfBath*0.5)+all$BsmtFullBath+(all$BsmtHalfBath*0.5)
+install.packages("Scales")
+library(scales)
+#看看totalbathroom跟房價之間的關係
+ggplot(data=all[!is.na(all$SalePrice),], aes(x=as.factor(TotalBathrooms), y=SalePrice))+
+  geom_point(col='blue') + geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1)) +
+  scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma)
+#看看totalbathroom跟交易量之間的關係
+ggplot(data=all, aes(x=as.factor(TotalBathrooms))) +
+  geom_histogram(stat='count')
 
-#設定訓練跟測驗的資料集
-train1 <- all[!is.na(all$SalePrice),]
-test1 <- all[is.na(all$SalePrice),]
-lm_model_15 <- lm(SalePrice ~ ., data=train1)
-summary(lm_model_15)
+#house remodeled(0=沒重新裝修，1=有重新裝修)
+all$Remod<-ifelse(all$YearBuilt==all$YearRemodAdd,0,1)
+all$Age<-as.numeric(all$YrSold)-all$YearRemodAdd
+ggplot(data=all[!is.na(all$SalePrice),], aes(x=Age, y=SalePrice))+
+  geom_point(col='blue') + geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1)) +
+  scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma)
+#看一下屋齡跟房價之間的關係，correlation=-0.5090787，屋齡愈高房價越低
+cor(all$SalePrice[!is.na(all$SalePrice)], all$Age[!is.na(all$SalePrice)])
+#重新裝潢跟黃價之間的關係，correlation=-0.0219326，有重新裝潢過的房子房價會比較低
+cor(all$SalePrice[!is.na(all$SalePrice)], all$Remod[!is.na(all$SalePrice)])
+#新房子!!新房子跟房價的關係，correlation=0.2248073，新房子房價比較高
+all$IsNew <- ifelse(all$YrSold==all$YearBuilt, 1, 0)
+table(all$IsNew)
+cor(all$SalePrice[!is.na(all$SalePrice)], all$IsNew[!is.na(all$SalePrice)])
 
-#A Linear Model
-lm_model_15 <- lm(SalePrice ~ MSZoning+OverallQual+ExterQual+KitchenQual+GarageCars+LotArea+BsmtUnfSF+TotalBsmtSF+Condition2+
-                    X1stFlrSF+X2ndFlrSF+BsmtCond+FullBath+GarageFinish+TotRmsAbvGrd+YearBuilt+FireplaceQu+YearRemodAdd+Neighborhood+
-                    HouseStyle+RoofMatl+MasVnrArea+BsmtExposure+BsmtFinSF1+CentralAir+BedroomAbvGr+PoolQC+Fence
-                   , data=train1)
-summary(lm_model_15)
-prediction <- predict(lm_model_15, test1, type="response")
-write.csv(prediction,file = "house predicion.csv")
+#社區鄰居，把社區鄰居依照房價分群，可以看到有三個社區房價特高，那我也挑選三個社區房價低的
+arrange(aggregate(SalePrice~Neighborhood,all,FUN = "mean"),SalePrice)
+arrange(aggregate(SalePrice~Neighborhood,all,FUN = "median"),SalePrice)
+#%in%:包含
+all$NeighRich[all$Neighborhood %in% c('StoneBr', 'NridgHt', 'NoRidge')] <- 2
+all$NeighRich[!all$Neighborhood %in% c('MeadowV', 'IDOTRR', 'BrDale', 'StoneBr', 'NridgHt', 'NoRidge')] <- 1
+all$NeighRich[all$Neighborhood %in% c('MeadowV', 'IDOTRR', 'BrDale')] <- 0
+table(all$NeighRich)
+#total square feet，correlation between saleprice & total aquare feet is 0.7668127
+all$TotalSqFeet <- all$GrLivArea + all$TotalBsmtSF
+cor(all$SalePrice, all$TotalSqFeet, use= "pairwise.complete.obs")
+#total porch square feet，correlation between saleprice & total porch square feet is 0.192567
+all$TotalPorchSF <- all$OpenPorchSF + all$EnclosedPorch + all$X3SsnPorch + all$ScreenPorch
+cor(all$SalePrice, all$TotalPorchSF, use= "pairwise.complete.obs")
+#remove outlier
+all <- all[-c(524, 1299),]
+
+#找出真正的numeric variable
+numericVars <- which(sapply(all, is.numeric))
+numericVarNames <- names(numericVars)
+numericVarNames <- numericVarNames[!(numericVarNames %in% c('MSSubClass', 'MoSold', 'YrSold', 'SalePrice', 'OverallQual', 'OverallCond'))]
+DFnumeric <- all[, names(all) %in% numericVarNames]
+DFfactors <- all[, !(names(all) %in% numericVarNames)]
+DFfactors <- DFfactors[, names(DFfactors) != 'SalePrice']
+
+length(DFnumeric)
+length(DFfactors)
+
+#做預測的一項大條件就是要為常態分配，所以我們要對我們的data做調整讓他變成常態分配
+install.packages("psych")
+library(psych)
+for(i in 1:ncol(DFnumeric)){
+  if (abs(skew(DFnumeric[,i]))>0.8){
+    DFnumeric[,i] <- log(DFnumeric[,i] +1)
+  }
+}
+#將所有的資料轉成可用的資料
+PreNum <- preProcess(DFnumeric, method=c("center", "scale"))
+print(PreNum)
+DFnorm <- predict(PreNum, DFnumeric)
+dim(DFnorm)
+
+#要把dummy variable做處理，使用model.matrix做轉換，要注意資料集全部都要是factor
+DFdummies <- as.data.frame(model.matrix(~.-1, DFfactors))
+dim(DFdummies)
+#找出那些變相再test資料集中根本沒出現的，然後刪除這些變相
+ZerocolTest <- which(colSums(DFdummies[(nrow(all[!is.na(all$SalePrice),])+1):nrow(all),])==0)
+colnames(DFdummies[ZerocolTest])
+DFdummies <- DFdummies[,-ZerocolTest]
+#找出那些變相再train資料集中根本沒出現的，然後刪除這些變相
+ZerocolTrain <- which(colSums(DFdummies[1:nrow(all[!is.na(all$SalePrice),]),])==0)
+colnames(DFdummies[ZerocolTrain])
+DFdummies <- DFdummies[,-ZerocolTrain]
+#刪除資料中只出現10個以下的變相
+fewOnes <- which(colSums(DFdummies[1:nrow(all[!is.na(all$SalePrice),]),])<10)
+colnames(DFdummies[fewOnes])
+DFdummies <- DFdummies[,-fewOnes]
+dim(DFdummies)
+#把dummy跟數值變相的資料和在一起
+combined <- cbind(DFnorm, DFdummies)
 
 
 
