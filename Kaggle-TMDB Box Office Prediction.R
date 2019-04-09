@@ -12,13 +12,21 @@ test$revenue<-NA
 all<-rbind(train,test)
 trainset<-which(!is.na(all$revenue))
 
+#revenue呈現右偏
 library(ggplot2)
-ggplot(all,aes(x=revenue,fill=length(as.factor(all$id))))+
-  geom_histogram(binwidth = 5000)+
-  ggtitle("Histogram of revenue")+
-  xlab("revenue")+
-  ylab("number of movie")
+ggplot(all,aes(x=revenue,fill=length(as.factor(train$id))))+
+  geom_histogram()
 
-missing<-all[!complete.cases(all),]
-
+#先看看numeric的變數
 numericVar<-which(sapply(all,is.numeric))
+library(corrplot)
+all_numVar<-all[,numericVar]
+cor_all<-cor(all_numVar,use = "pairwise.complete.obs")
+cor_all_matrix<-corrplot.mixed(cor_all,to.col="black",tl.pos = "lt")
+
+#看看遺漏值
+nacl<-which(colSums(is.na(all))>0)
+sort(colSums(sapply(all[,nacl], is.na)),decreasing = TRUE)
+length(sort(colSums(sapply(all[,nacl], is.na)),decreasing = TRUE))
+
+str(all$belongs_to_collection)
