@@ -1,0 +1,5 @@
+setwd("C:/Users/ASUS/Desktop/SF Crime classfication")
+train<-read.csv("C:/Users/ASUS/Desktop/SF Crime classfication/train.csv")
+test<-read.csv("C:/Users/ASUS/Desktop/SF Crime classfication/test.csv")
+str(train)
+str(test)
