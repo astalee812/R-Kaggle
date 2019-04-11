@@ -76,3 +76,20 @@ train%>%
 train$belongs_to_collection[!is.na(train$belongs_to_collection)] <- 1
 train$belongs_to_collection[is.na(train$belongs_to_collection)] <- 0
 
+#genre這個欄位也是json格是，是個很長的字串，一樣用正規表示法將字串分開
+#先處理看看有一個電影會有幾個分類
+genreCount <- str_count(train$genres, "\\}")
+train$numberOfGenres <- genreCount
+numberOfSplitCols <- max(na.omit(genreCount))
+genreCount %>%
+  as.data.frame(stringsAsFactors = F) %>%
+  ggplot(aes(genreCount)) +
+  geom_histogram(stat = "count")+
+  scale_x_discrete(limits=1:numberOfSplitCols) +
+  theme_light() +
+  xlab("Number Of Genres Per Movie") +
+  ylab("Number Of Movies") +
+  ggtitle("Histogram Of Number Of Genres Per Movie")
+
+#把多個分類先分開
+genresSplit <- as.data.frame(str_split_fixed(train$genres, "\\}\\,\\s\\{", numberOfSplitCols), stringsAsFactors = F)
