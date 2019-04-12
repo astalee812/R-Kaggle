@@ -163,5 +163,56 @@ ggplot(centralLong,
   ggtitle("Mean and Median Revenue By Genre") +
   guides(fill=guide_legend(title="Measure"))
 
+#cast part的抽取實在有點困難，我這邊是使用其他人的code來做清理
+cast_list <- list()
+
+for (i in seq_along(train$cast)) {
+  cast_list[[i]] <- train$cast[[i]] %>%
+    str_extract_all('(?<=\\{).*?(?=\\})') %>%  #extract everything between {}
+    str_split("(?<=[:digit:]|[:punct:]), ",
+              n=Inf,simplify = TRUE) %>%       #split on ","
+    str_extract_all('(?<=\\:[:space:]).*') %>% #get the part after the semicolon
+    str_replace_all("'|\"","") %>% #clean the unwanted punctuation
+    matrix( ncol = 8,  byrow = TRUE,dimnames=list(c(),
+                                                  c("cast_id","character","credit_id","gender","id",
+                                                    "name","order","profile_path"))) %>% #convert to matrix
+    as_tibble(stringsAsFactors = FALSE)#convert the matrix to tibble
+}
+
+names(cast_list) <- c(1:3000)
+cast_df <- bind_rows(cast_list, .id = 'movie_id')
+
+#製作公司的抽取
+production_companies_list <- list()
+for (i in seq_along(train$production_companies)) {
+  production_companies_list[[i]] <- train$production_companies[[i]] %>%
+    str_extract_all('(?<=\\{).*?(?=\\})') %>% 
+    str_split("(?<=[:digit:]|[:punct:]), ",n=Inf,simplify = TRUE) %>% 
+    str_extract_all('(?<=\\:[:space:]).*') %>% 
+    str_replace_all("[:punct:]","") %>% 
+    matrix( ncol = 2,  byrow = TRUE,dimnames=list(c(),
+                                                  c("name","id"))) %>% 
+    as_tibble(stringsAsFactors = FALSE)
+}
+
+names(production_companies_list) <- c(1:3000)
+production_companies_df <- bind_rows(production_companies_list, .id = 'movie_id')
+
+#團隊的抽取
+crew_list <- list()
+
+for (i in seq_along(train$crew)) {
+  crew_list[[i]] <- train$crew[[i]] %>%
+    str_extract_all('(?<=\\{).*?(?=\\})') %>% 
+    str_split("(?<=[:digit:]|[:punct:]), ",n=Inf,simplify = TRUE) %>% 
+    str_extract_all('(?<=\\:[:space:]).*') %>% 
+    str_replace_all("[:punct:]","") %>% 
+    matrix( ncol = 7,  byrow = TRUE,dimnames=list(c(),
+                                                  c("credit_id","department","gender","id","job","name","profile_path"))) %>% 
+    as_tibble(stringsAsFactors = FALSE)
+}
+
+names(crew_list) <- c(1:3000)
+crew_df <- bind_rows(crew_list, .id = 'movie_id')
 
 
