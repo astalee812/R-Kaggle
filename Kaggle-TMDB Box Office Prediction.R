@@ -103,3 +103,22 @@ genreIds[is.na(genreIds)] <- ""
 #把電影分類的名稱用正規表示法抽取出來，變成data frame
 genreNames <- as.data.frame(sapply(genresSplit, function(x) str_extract(x, "(?<=name\\'\\:\\s{1}\\').+(?=\\')")), stringsAsFactors = F)
 genreNames[is.na(genreNames)] <- ""
+
+#現在有了分類名稱跟分類ID，可以來看一下電影分類的數量分布
+#直接使用table會產生多項量的計算，但我想要全部加總，使用length只會回傳7，用看看unlist
+#unlsit可以將向量list的東西打散變成一個一個的資料，之後還是要把她變成data frame的格式才可以使用
+gs<-as.data.frame(table(unlist(genreNames)))
+#來畫個圖，但我要把第一個去掉，因為是空白
+nrow(gs)
+gs<-gs[2:21,]
+#畫圖時間，我把圖形翻轉，因為直條圖看起來很不友善，在數據部分我也重新排序
+ggplot(data=gs, aes(x = reorder(Var1, Freq),
+                    y = Freq,
+                    fill = Var1)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  xlab("") +
+  ylab("Number Of Movies") +
+  ggtitle("Number of Movies Containing Specific Tag") +
+  theme(legend.position="none")
+
