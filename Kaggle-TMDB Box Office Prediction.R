@@ -216,3 +216,7 @@ names(crew_list) <- c(1:3000)
 crew_df <- bind_rows(crew_list, .id = 'movie_id')
 
 
+#針對release time做處理，這邊的日期格式是不一致的
+
+
+
