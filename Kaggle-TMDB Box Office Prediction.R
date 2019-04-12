@@ -122,3 +122,43 @@ ggplot(data=gs, aes(x = reorder(Var1, Freq),
   ggtitle("Number of Movies Containing Specific Tag") +
   theme(legend.position="none")
 
+#把genre的id跟名字拆出來之後，就要把它跟原先的train的資料集結合，然後把原本的grnre拿掉，col=4
+train<-cbind(train,genreNames)
+train<-train[,-4]
+
+#我把train ID 跟分類名稱拿出來做成另外一個表格，使用melt函數把多變數變成少變數但比較長的資料集
+#因為我想要看分類的收入平均跟中位數，我把revenue也加入新表格中，然後作圖看看個別的資料
+install.packages("reshape2")
+library(reshape2)
+genreLongFormat <- cbind(train$id, genreNames)
+genreLongFormat <- melt(genreLongFormat, id.vars = 'train$id') %>% 
+  select(-variable) %>% 
+  filter(value != "")
+colnames(genreLongFormat) <- c("id", "value")
+genreLongFormat <- left_join(genreLongFormat, train, by = "id")
+genreLongFormat <- genreLongFormat %>% select(id, value, revenue)
+
+#我要先計算平均數跟中位數
+medians <- genreLongFormat %>% 
+  group_by(value) %>% 
+  summarise(median = median(revenue))
+
+means <- genreLongFormat %>% 
+  group_by(value) %>% 
+  summarise(mean = mean(revenue))
+
+#我繼續使用melt做資料集的轉換
+central <- left_join(means, medians, by = "value")
+centralLong <- melt(as.data.frame(central), id.vars = "value")
+colnames(centralLong) <- c("genre", "central", "revenue")
+ggplot(centralLong, 
+       aes(x = reorder(genre, revenue), 
+           y = revenue)) + 
+  geom_bar(aes(fill = central), 
+           stat = "identity", 
+           position = "dodge") +
+  coord_flip() +
+  xlab("") +
+  ylab("Revenue") +
+  ggtitle("Mean and Median Revenue By Genre") +
+  guides(fill=guide_legend(title="Measure"))
