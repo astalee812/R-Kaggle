@@ -93,3 +93,13 @@ genreCount %>%
 
 #把多個分類先分開
 genresSplit <- as.data.frame(str_split_fixed(train$genres, "\\}\\,\\s\\{", numberOfSplitCols), stringsAsFactors = F)
+head(genresSplit, 5)
+#把電影分類的ID用正規表示法抽取出來，變成一個data frame，然後變成numeric的形式
+#若只用data frame做的話，沒辦法針對個別電影所分到的分類做成表格
+#使用sapply會將輸出內容變成矩陣，不過在function部分就要自己寫一個
+genreIds <- as.data.frame(sapply(genresSplit, function(x) str_extract(x, "(?<=id\\'\\:\\s{1})\\d{1,}")), stringsAsFactors = F)
+genreIds <- as.data.frame(sapply(genreIds, function(x) as.numeric(x)), stringsAsFactors = F)
+genreIds[is.na(genreIds)] <- ""
+#把電影分類的名稱用正規表示法抽取出來，變成data frame
+genreNames <- as.data.frame(sapply(genresSplit, function(x) str_extract(x, "(?<=name\\'\\:\\s{1}\\').+(?=\\')")), stringsAsFactors = F)
+genreNames[is.na(genreNames)] <- ""
