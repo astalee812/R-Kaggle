@@ -162,3 +162,6 @@ ggplot(centralLong,
   ylab("Revenue") +
   ggtitle("Mean and Median Revenue By Genre") +
   guides(fill=guide_legend(title="Measure"))
+
+
+
