@@ -300,3 +300,30 @@ all$numberOfKeywords[is.na(all$numberOfKeywords)] <- 0
 
 #繼續整理欄位! 開始刪!!
 all<-all[,-c(7,10,13)]
+all<-all[,-c(15,16,17,18,19,20,21,22)]
+
+#整理變相的因素
+all$id<-as.factor(all$id)
+all$belongs_to_collection<-as.numeric(all$belongs_to_collection)
+all$budget<-as.numeric(all$budget)
+all$homepage<-as.numeric(all$homepage)
+all$tagline<-as.numeric(all$tagline)
+all$collection_id<-as.factor(all$collection_id)
+all$numberOfGenres<-as.numeric(all$numberOfGenres)
+all$`cast number`<-as.numeric(all$`cast number`)
+all$`production companies number`<-as.numeric(all$`production companies number`)
+all$`crew number`<-as.numeric(all$`crew number`)
+all$numberOfSpokenLanguage<-as.numeric(all$numberOfSpokenLanguage)
+
+#開始做特徵篩選拉! 做一下correlation，把數值系列的變相先挑出來
+str(all)
+trainset<-all[1:3000,]
+trainnumeric<-which(sapply(trainset, is.numeric))
+train_numVar<-trainset[,trainnumeric]
+train_cor<-cor(train_numVar,use = "pairwise.complete.obs")
+#出來的是一個很可怕的大圖!!
+install.packages("corrplot")
+library(corrplot)
+corrplot.mixed(train_cor,to.col="black",tl.pos = "lt")
+#針對correlation做篩選，correlation>0.5，結果好悽慘，只有budget跟popularity有比較強相關
+cor_sort<-as.matrix(sort(train_cor[,"revenue"],decreasing = TRUE))
