@@ -304,26 +304,35 @@ all<-all[,-c(15,16,17,18,19,20,21,22)]
 
 #整理變相的因素
 all$id<-as.factor(all$id)
-all$belongs_to_collection<-as.numeric(all$belongs_to_collection)
+all$belongs_to_collection<-as.integer(all$belongs_to_collection)
 all$budget<-as.numeric(all$budget)
-all$homepage<-as.numeric(all$homepage)
-all$tagline<-as.numeric(all$tagline)
+all$homepage<-as.integer(all$homepage)
+all$tagline<-as.integer(all$tagline)
 all$collection_id<-as.factor(all$collection_id)
 all$numberOfGenres<-as.numeric(all$numberOfGenres)
 all$`cast number`<-as.numeric(all$`cast number`)
 all$`production companies number`<-as.numeric(all$`production companies number`)
 all$`crew number`<-as.numeric(all$`crew number`)
 all$numberOfSpokenLanguage<-as.numeric(all$numberOfSpokenLanguage)
+all$year<-as.numeric(all$year)
+all$month<-as.numeric(all$month)
+all$weekday<-as.factor(all$weekday)
+all$original_language<-as.factor(all$original_language)
 
-#開始做特徵篩選拉! 做一下correlation，把數值系列的變相先挑出來
+#開始做特徵篩選拉! 做一下correlation，把數值系列的變相先挑出來，線性問題
 str(all)
-trainset<-all[1:3000,]
-trainnumeric<-which(sapply(trainset, is.numeric))
-train_numVar<-trainset[,trainnumeric]
-train_cor<-cor(train_numVar,use = "pairwise.complete.obs")
+all_numeric<-which(sapply(all, is.numeric))
+all_numVar<-all[,all_numeric]
+all_cor<-cor(all_numVar,use = "pairwise.complete.obs")
 #出來的是一個很可怕的大圖!!
 install.packages("corrplot")
 library(corrplot)
-corrplot.mixed(train_cor,to.col="black",tl.pos = "lt")
+corrplot.mixed(all_cor,to.col="black",tl.pos = "lt")
 #針對correlation做篩選，correlation>0.5，結果好悽慘，只有budget跟popularity有比較強相關
-cor_sort<-as.matrix(sort(train_cor[,"revenue"],decreasing = TRUE))
+cor_sort<-as.matrix(sort(all_cor[,"revenue"],decreasing = TRUE))
+
+trainset<-all[1:3000,]
+install.packages("onehot")
+library(onehot)
+encord<-onehot(DFfactors)
+trian_data<-predict(encord,DFfactors)
