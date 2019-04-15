@@ -182,6 +182,22 @@ for (i in seq_along(train$cast)) {
 names(cast_list) <- c(1:3000)
 cast_df <- bind_rows(cast_list, .id = 'movie_id')
 
+#看看哪位演員很厲害演很多
+cast_df %>%
+  group_by(name) %>%
+  summarise(numberOfcast = n()) %>%
+  arrange(desc(numberOfcast)) %>%
+  head(20)
+#每個電影演員的數量
+cast_number<-cast_df %>%
+  group_by(movie_id) %>%
+  summarise(numberOfcast = n()) %>%
+  arrange(movie_id)
+#把演員數量跟train做結合
+colnames(cast_number)<-c("id","cast number")
+train<-merge(train,cast_number,by="id")
+
+
 #製作公司的抽取
 production_companies_list <- list()
 for (i in seq_along(train$production_companies)) {
@@ -197,10 +213,23 @@ for (i in seq_along(train$production_companies)) {
 
 names(production_companies_list) <- c(1:3000)
 production_companies_df <- bind_rows(production_companies_list, .id = 'movie_id')
+#看看哪家電影公司出最多東西
+production_companies_df %>%
+  group_by(name) %>%
+  summarise(numberOfprodictioncampanies = n()) %>%
+  arrange(desc(numberOfprodictioncampanies)) %>%
+  head(20)
+#看看每個電影的製作公司數量
+production_number<-production_companies_df %>%
+  group_by(movie_id) %>%
+  summarise(numberOfprodictioncampanies = n()) %>%
+  arrange(movie_id)
+#把製作公司數量跟train結合
+colnames(production_number)<-c("id","production companies number")
+train<-merge(train,production_number,by="id")
 
 #團隊的抽取
 crew_list <- list()
-
 for (i in seq_along(train$crew)) {
   crew_list[[i]] <- train$crew[[i]] %>%
     str_extract_all('(?<=\\{).*?(?=\\})') %>% 
@@ -214,9 +243,28 @@ for (i in seq_along(train$crew)) {
 
 names(crew_list) <- c(1:3000)
 crew_df <- bind_rows(crew_list, .id = 'movie_id')
+#看看每個電影的電影團隊數量
+crew_number<-crew_df %>%
+  group_by(movie_id) %>%
+  summarise(numberOfcrew = n()) %>%
+  arrange(movie_id)
+#把電影團隊數量跟train結合
+colnames(crew_number)<-c("id","crew number")
+train<-merge(train,crew_number,by="id")
 
+#針對release time做處理，這邊的日期格式是不一致的，順便把年月跟星期抽出來
+install.packages("lubridate")
+library(lubridate)
+train1<-train1$release_date
+release_date = as_date(ifelse(mdy(train$release_date) > Sys.Date(), 
+                              format(mdy(train$release_date), "19%y-%m-%d"), 
+                              format(mdy(train$release_date))))
+train$release_date<-as_date(release_date)
+train$year<-year(train$release_date)
+train$month<-month(train$release_date)
+train$weekday<-weekdays(train$release_date)
 
-#針對release time做處理，這邊的日期格式是不一致的
-
-
+#homepage部分，有homepage=1,沒有的話=0
+train$homepage[!is.na(train$homepage)] <- 1
+train$homepage[is.na(train$homepage)] <- 0
 
