@@ -25,21 +25,21 @@ cor_all<-cor(all_numVar,use = "pairwise.complete.obs")
 cor_all_matrix<-corrplot.mixed(cor_all,to.col="black",tl.pos = "lt")
 
 #看看遺漏值
-nacl<-which(colSums(is.na(train))>0)
-sort(colSums(sapply(train[,nacl], is.na)),decreasing = TRUE)
-length(sort(colSums(sapply(train[,nacl], is.na)),decreasing = TRUE))
-str(train$belongs_to_collection)
+nacl<-which(colSums(is.na(all))>0)
+sort(colSums(sapply(all[,nacl], is.na)),decreasing = TRUE)
+length(sort(colSums(sapply(all[,nacl], is.na)),decreasing = TRUE))
+str(all$belongs_to_collection)
 
 #處理最多的遺漏值變數:belong to collection
 #這個系列電影data其實是json字串格是，使用正規表達式做字串切割
 install.packages("stringr")
 library(stringr)
-train$collection_id <- str_extract(train$belongs_to_collection, "(?<=id\\'\\:\\s{1})\\d{1,}")
-train$collection_name <- str_extract(train$belongs_to_collection, "(?<=name\\'\\:\\s{1}\\').+(?=\\'\\,\\s{1}\\'poster)")
+all$collection_id <- str_extract(all$belongs_to_collection, "(?<=id\\'\\:\\s{1})\\d{1,}")
+all$collection_name <- str_extract(all$belongs_to_collection, "(?<=name\\'\\:\\s{1}\\').+(?=\\'\\,\\s{1}\\'poster)")
 
 #看看系列電影的數量有多少，並且排名
 library(dplyr)
-train %>%
+all %>%
   group_by(collection_name) %>%
   summarise(numberOfMovies = n()) %>%
   arrange(desc(numberOfMovies)) %>%
@@ -47,7 +47,7 @@ train %>%
   head(20)
 
 #系列電影的各系列平均收入有多少，並且排名
-train %>%
+all %>%
   group_by(collection_name) %>%
   summarise(collectionAvgRevenue = mean(revenue)) %>%
   arrange(desc(collectionAvgRevenue)) %>%
@@ -55,31 +55,33 @@ train %>%
   head(10)
 
 #系列電影的數量
-train%>%
+all%>%
   filter(!is.na(collection_name))%>%
   summarise(numberofmovies=n())
 #系列電影的平均收入
-train%>%
+all%>%
   filter(!is.na(collection_name))%>%
+  filter(!is.na(revenue))%>%
   summarise(noncollectionRevenue=mean(revenue))
 
 #非系列電影的數量
-train%>%
+all%>%
   filter(is.na(collection_name))%>%
   summarise(numberofmovies=n())
 #非系列電影的平均收入
-train%>%
+all%>%
   filter(is.na(collection_name))%>%
+  filter(!is.na(revenue))%>%
   summarise(noncollectionRevenue=mean(revenue))
 
 #轉換系列跟非系列電影的變數
-train$belongs_to_collection[!is.na(train$belongs_to_collection)] <- 1
-train$belongs_to_collection[is.na(train$belongs_to_collection)] <- 0
+all$belongs_to_collection[!is.na(all$belongs_to_collection)] <- 1
+all$belongs_to_collection[is.na(all$belongs_to_collection)] <- 0
 
 #genre這個欄位也是json格是，是個很長的字串，一樣用正規表示法將字串分開
 #先處理看看有一個電影會有幾個分類
-genreCount <- str_count(train$genres, "\\}")
-train$numberOfGenres <- genreCount
+genreCount <- str_count(all$genres, "\\}")
+all$numberOfGenres <- genreCount
 numberOfSplitCols <- max(na.omit(genreCount))
 genreCount %>%
   as.data.frame(stringsAsFactors = F) %>%
@@ -92,7 +94,7 @@ genreCount %>%
   ggtitle("Histogram Of Number Of Genres Per Movie")
 
 #把多個分類先分開
-genresSplit <- as.data.frame(str_split_fixed(train$genres, "\\}\\,\\s\\{", numberOfSplitCols), stringsAsFactors = F)
+genresSplit <- as.data.frame(str_split_fixed(all$genres, "\\}\\,\\s\\{", numberOfSplitCols), stringsAsFactors = F)
 head(genresSplit, 5)
 #把電影分類的ID用正規表示法抽取出來，變成一個data frame，然後變成numeric的形式
 #若只用data frame做的話，沒辦法針對個別電影所分到的分類做成表格
@@ -122,21 +124,24 @@ ggplot(data=gs, aes(x = reorder(Var1, Freq),
   ggtitle("Number of Movies Containing Specific Tag") +
   theme(legend.position="none")
 
-#把genre的id跟名字拆出來之後，就要把它跟原先的train的資料集結合，然後把原本的grnre拿掉，col=4
-train<-cbind(train,genreNames)
-train<-train[,-4]
+#把genre的id跟名字拆出來之後，就要把它跟原先的all的資料集結合，然後把原本的grnre拿掉，col=4
+all<-cbind(all,genreNames)
+all<-all[,-4]
 
-#我把train ID 跟分類名稱拿出來做成另外一個表格，使用melt函數把多變數變成少變數但比較長的資料集
+#我把all ID 跟分類名稱拿出來做成另外一個表格，使用melt函數把多變數變成少變數但比較長的資料集
 #因為我想要看分類的收入平均跟中位數，我把revenue也加入新表格中，然後作圖看看個別的資料
 install.packages("reshape2")
 library(reshape2)
-genreLongFormat <- cbind(train$id, genreNames)
-genreLongFormat <- melt(genreLongFormat, id.vars = 'train$id') %>% 
+genreLongFormat <- cbind(all$id, genreNames)
+genreLongFormat <- melt(genreLongFormat, id.vars = 'all$id') %>% 
   select(-variable) %>% 
   filter(value != "")
+
 colnames(genreLongFormat) <- c("id", "value")
-genreLongFormat <- left_join(genreLongFormat, train, by = "id")
-genreLongFormat <- genreLongFormat %>% select(id, value, revenue)
+genreLongFormat <- left_join(genreLongFormat, all, by = "id")
+genreLongFormat <- genreLongFormat %>% 
+  select(id, value, revenue)%>%
+  filter(!is.na(revenue))
 
 #我要先計算平均數跟中位數
 medians <- genreLongFormat %>% 
@@ -166,8 +171,8 @@ ggplot(centralLong,
 #cast part的抽取實在有點困難，我這邊是使用其他人的code來做清理
 cast_list <- list()
 
-for (i in seq_along(train$cast)) {
-  cast_list[[i]] <- train$cast[[i]] %>%
+for (i in seq_along(all$cast)) {
+  cast_list[[i]] <- all$cast[[i]] %>%
     str_extract_all('(?<=\\{).*?(?=\\})') %>%  #extract everything between {}
     str_split("(?<=[:digit:]|[:punct:]), ",
               n=Inf,simplify = TRUE) %>%       #split on ","
@@ -193,14 +198,13 @@ cast_number<-cast_df %>%
   group_by(movie_id) %>%
   summarise(numberOfcast = n()) %>%
   arrange(movie_id)
-#把演員數量跟train做結合
+#把演員數量跟all做結合
 colnames(cast_number)<-c("id","cast number")
-train<-merge(train,cast_number,by="id")
-
+all<-merge(all,cast_number,by="id")
 
 #製作公司的抽取
 production_companies_list <- list()
-for (i in seq_along(train$production_companies)) {
+for (i in seq_along(all$production_companies)) {
   production_companies_list[[i]] <- train$production_companies[[i]] %>%
     str_extract_all('(?<=\\{).*?(?=\\})') %>% 
     str_split("(?<=[:digit:]|[:punct:]), ",n=Inf,simplify = TRUE) %>% 
@@ -224,14 +228,14 @@ production_number<-production_companies_df %>%
   group_by(movie_id) %>%
   summarise(numberOfprodictioncampanies = n()) %>%
   arrange(movie_id)
-#把製作公司數量跟train結合
+#把製作公司數量跟all結合
 colnames(production_number)<-c("id","production companies number")
-train<-merge(train,production_number,by="id")
+all<-merge(all,production_number,by="id")
 
 #團隊的抽取
 crew_list <- list()
-for (i in seq_along(train$crew)) {
-  crew_list[[i]] <- train$crew[[i]] %>%
+for (i in seq_along(all$crew)) {
+  crew_list[[i]] <- all$crew[[i]] %>%
     str_extract_all('(?<=\\{).*?(?=\\})') %>% 
     str_split("(?<=[:digit:]|[:punct:]), ",n=Inf,simplify = TRUE) %>% 
     str_extract_all('(?<=\\:[:space:]).*') %>% 
@@ -248,23 +252,51 @@ crew_number<-crew_df %>%
   group_by(movie_id) %>%
   summarise(numberOfcrew = n()) %>%
   arrange(movie_id)
-#把電影團隊數量跟train結合
+#把電影團隊數量跟all結合
 colnames(crew_number)<-c("id","crew number")
-train<-merge(train,crew_number,by="id")
+all<-merge(all,crew_number,by="id")
 
 #針對release time做處理，這邊的日期格式是不一致的，順便把年月跟星期抽出來
 install.packages("lubridate")
 library(lubridate)
-train1<-train1$release_date
-release_date = as_date(ifelse(mdy(train$release_date) > Sys.Date(), 
-                              format(mdy(train$release_date), "19%y-%m-%d"), 
-                              format(mdy(train$release_date))))
-train$release_date<-as_date(release_date)
-train$year<-year(train$release_date)
-train$month<-month(train$release_date)
-train$weekday<-weekdays(train$release_date)
+
+release_date = as_date(ifelse(mdy(all$release_date) > Sys.Date(), 
+                              format(mdy(all$release_date), "19%y-%m-%d"), 
+                              format(mdy(all$release_date))))
+all$release_date<-as_date(release_date)
+all$year<-year(all$release_date)
+all$month<-month(all$release_date)
+all$weekday<-weekdays(all$release_date)
 
 #homepage部分，有homepage=1,沒有的話=0
-train$homepage[!is.na(train$homepage)] <- 1
-train$homepage[is.na(train$homepage)] <- 0
+all$homepage[!is.na(all$homepage)] <- 1
+all$homepage[is.na(all$homepage)] <- 0
 
+#tagline部分，有tagline=1,沒有的話=0
+all$tagline[!is.na(all$tagline)] <- 1
+all$tagline[is.na(all$tagline)] <- 0
+
+#中途整理一下all的欄位，我自己的習慣比較好看，也知道我剩下什麼還沒處理
+#刪除imdb_id,original_title,overview,poster_path,title等不重要的欄位
+all<-all2
+all<-all[,-c(5,7,8,10,11,18,20,21)]
+
+#production contry，以為都只會以一個國家，但發現其實有些電影有多個國家
+numberOfProductionCountries<-str_count(all$production_countries, 'name')
+numberOfProductionCountries<-as.data.frame(numberOfProductionCountries)
+all<-cbind(all,numberOfProductionCountries)
+all$numberOfProductionCountries[is.na(all$numberOfProductionCountries)] <- 0
+
+#spoken language也是一樣，會有單個電影有多種語言
+numberOfSpokenLanguage<-str_count(all$spoken_languages, 'name')
+numberOfSpokenLanguage<-as.data.frame(numberOfSpokenLanguage)
+all<-cbind(all,numberOfSpokenLanguage)
+
+#keywords，單個電影會有很多個keywords
+numberOfKeywords<-str_count(all$Keywords, 'name')
+numberOfKeywords<-as.data.frame(numberOfKeywords)
+all<-cbind(all,numberOfKeywords)
+all$numberOfKeywords[is.na(all$numberOfKeywords)] <- 0
+
+#繼續整理欄位! 開始刪!!
+all<-all[,-c(7,10,13)]
