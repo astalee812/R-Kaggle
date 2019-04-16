@@ -115,3 +115,16 @@ df<-df[,c("budget","original_language","popularity","spoken_languages",
           "p_comp_len","dayofweek2","cast_nword")]
 
 
+install.packages("tidyr")
+library(tidyr)
+train<-train_raw %>%
+  separate(belongs_to_collection, 'idPart', sep = 'name', remove = TRUE) %>%
+  separate(release_date, c('releaseMonth', 'releaseDay', 'releaseYear'), sep = '/', remove = TRUE)
+
+train$collectionID<-ifelse(is.na(train$idPart)==FALSE,gsub("\\D","",train$idPart),train$idPart)
+train$collectionID<-ifelse(is.na(train$collectionID),0,train$collectionID)
+train$partofcollection<-ifelse(is.na(train$idPart),0,1)
+train$hashomepage<-ifelse(is.na(train$homepage),0,1)
+train$genres<-ifelse(is.na(train$genres),"Nogen",train$genres)
+train$genComedy<-ifelse(stri_detect_fixed(train$genres,"Comedy"),1,0)
+train$genDrama<-ifelse(stri_detect_fixed(train$genres,"Drama"),1,0)
