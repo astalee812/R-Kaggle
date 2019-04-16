@@ -15,7 +15,7 @@ library(tidyverse)
 install.packages("stringi")
 library(stringi)
 
-#先做一個function用來整理json的正規表達式
+#先做一個function用來整理json的正規表達式，這部分是抓其他人的code
 map.func = function(x, y = 2){
   map = x %>% 
     sapply(FUN = function(x){strsplit(x, '[,.:""]')[[1]][y]}) %>% 
@@ -74,3 +74,27 @@ df$month<-month(date.format)
 df$weekday<-weekdays(date.format)
 df$weekday<-as.factor(df$weekday)
 df$weekday<-as.numeric(df$weekday)
+#把季抽取出來，一開始抽取出來會是Q1-Q4，先轉factor再轉numeric
+df$quarter<-quarters(date.format)
+df$quarter<-as.factor(df$quarter)
+df$quarter<-as.numeric(df$quarter)
+# 把日期+3，"%%"餘數計算
+df$dayofweek2<-(as.numeric(days(date.format))+3)%%7
+#計算時間是第幾周
+df$week<-week(date.format)
+
+df$cast_len<-stri_length(df$cast)
+df$cast_nword<-stri_count(df$cast, regex="name")
+
+df$p_comp_len<-stri_length(df$production_companies)
+df$P_comp_nword<-stri_count(df$production_companies,regex="name")
+
+df$tag_length<-stri_length(df$tagline)
+df$tagline_nword<-stri_count(df$tagline,regex = "name")
+df$tag_hasNA<-ifelse(is.na(df$tagline),0,1)
+
+df$lan_isEN<-ifelse(df$original_language=="en",0,1)
+
+df$collection_id<-map.func(df$belongs_to_collection)
+df$collection_hasNA<-ifelse(is.na(df$belongs_to_collection),0,1)
+
