@@ -15,7 +15,7 @@ library(tidyverse)
 install.packages("stringi")
 library(stringi)
 
-#先做一個function用來整理json的正規表達式，這部分是抓其他人的code
+#先做一個function用來整理json的正規表達式，這部分是抓其他人的code，全部都是抓取id的位子
 map.func = function(x, y = 2){
   map = x %>% 
     sapply(FUN = function(x){strsplit(x, '[,.:""]')[[1]][y]}) %>% 
@@ -85,16 +85,33 @@ df$week<-week(date.format)
 
 df$cast_len<-stri_length(df$cast)
 df$cast_nword<-stri_count(df$cast, regex="name")
-
 df$p_comp_len<-stri_length(df$production_companies)
 df$P_comp_nword<-stri_count(df$production_companies,regex="name")
-
 df$tag_length<-stri_length(df$tagline)
 df$tagline_nword<-stri_count(df$tagline,regex = "name")
 df$tag_hasNA<-ifelse(is.na(df$tagline),0,1)
-
 df$lan_isEN<-ifelse(df$original_language=="en",0,1)
-
 df$collection_id<-map.func(df$belongs_to_collection)
 df$collection_hasNA<-ifelse(is.na(df$belongs_to_collection),0,1)
+df$homepage_hasNA<-ifelse(is.na(df$homepage),0,1)
+df$sametitle<-ifelse(df$title==df$original_title,1,0)
+df$crew_len<-stri_length(df$crew)
+df$crew_nword<-stri_count(df$crew,regex = "name")
+df$keywords_len<-stri_length(df$Keywords)
+df$keywords_nword<-stri_count(df$Keywords,regex = "name")
+df$production_countries<-map.func(df$production_countries)
+df$com1<-map.func(df$production_companies)
+df$spoken_languages<-map.func(df$spoken_languages)
+df$genres<-map.func(df$genres)
+df$status<-as.numeric(as.factor(df$status))
+df$original_title<-as.numeric(as.factor(df$original_title))
+df$original_language<-as.numeric(as.factor(df$original_language))
+
+df<-df[,c("budget","original_language","popularity","spoken_languages",
+          "production_countries","genres","runtime","tagline_nword",
+          "tag_hasNA","lan_isEN","sametitle","crew_len","cast_len",
+          "homepage_hasNA","collection_hasNA",
+          "tag_length","keywords_len","year","month","weekday","week",
+          "p_comp_len","dayofweek2","cast_nword")]
+
 
