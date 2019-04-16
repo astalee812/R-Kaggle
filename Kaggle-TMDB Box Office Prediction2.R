@@ -49,3 +49,28 @@ df[df== ""] <- NA
 na.cols <- which(colSums(is.na(df)) > 0)
 na.cols <- sort(colSums(sapply(df[na.cols], is.na)), decreasing = TRUE)
 length(na.cols)
+
+#針對release date做統整
+install.packages("lubridate")
+library(lubridate)
+#這邊可以看到取出來的數值是尾數兩個，需要再做處理，先做一個年份處理的function
+df$year<-year(date.format)
+year.fun<-function(x){
+  if(is.na(x)){
+    return(paste0("2000"))
+  }else if(x<10){
+    return(paste0("200",x))
+  }else if(x>=10&x<=18){
+    return(paste0("20",x))
+  }else{
+    return(paste0("19",x))
+  }
+}
+df$year<-sapply(df$year,year.fun)
+df$year<-as.numeric(df$year)
+#把月份抽取出來
+df$month<-month(date.format)
+#把星期抽取出來，一開始出來的會是中文字，先轉成factor之後再轉成numeric就會變成數字
+df$weekday<-weekdays(date.format)
+df$weekday<-as.factor(df$weekday)
+df$weekday<-as.numeric(df$weekday)
