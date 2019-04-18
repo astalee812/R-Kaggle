@@ -114,7 +114,6 @@ df<-df[,c("budget","original_language","popularity","spoken_languages",
           "tag_length","keywords_len","year","month","weekday","week",
           "p_comp_len","dayofweek2","cast_nword")]
 
-
 install.packages("tidyr")
 library(tidyr)
 train<-train_raw %>%
@@ -160,4 +159,24 @@ train$sizeOfCast<-stri_count(train$cast,regex = "cast_id")
 train$sizeOfCrew<-stri_count(train$crew,regex ="name")
 train$sizeOfCrew<-ifelse(is.na(train$sizeOfCrew),0,train$sizeOfCrew)
 numberOfGenres<-stri_count(train$genres,regex = "name")
+train$collectionID<-as.factor(train$collectionID)
+
+train%>%
+  group_by(collectionID)%>%
+  mutate(sizeOfCollection=n())%>%
+  ungroup()%>%
+  mutate(sizeOfCollection=ifelse(sizeOfCollection>1000,0,sizeOfCollection))%>%
+  select(-idPart, -homepage, -imdb_id, -poster_path, -original_title, -genres, -overview, 
+         -tagline, -production_companies, -spoken_languages, -cast, -crew, -Keywords, 
+         -production_countries, -status, -releaseYear, -releaseMonth, -releaseDay,
+         -title, -collectionID)
+
+train<-train[,9:ncol(train)]
+df<-cbind(df,train)
+rm(train)
+
+df$fe2<-df$budget/df$popularity
+df$fe3<-df$budget/(df$year*df$year)
+df$fe4<-df$year/df$popularity
+df$fe5<-df$popularity*df$runtime
 
