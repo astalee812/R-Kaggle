@@ -145,3 +145,14 @@ train$genWestern<-ifelse(stri_detect_fixed(train$genres,"Family"),1,0)
 train$genHistory<-ifelse(stri_detect_fixed(train$genres,"History"),1,0)
 train$genForeign<-ifelse(stri_detect_fixed(train$genres,"Foreign"),1,0)
 train$genTVMovie<-ifelse(stri_detect_fixed(train$genres,"TV Movie"),1,0)
+train$production_companies<-ifelse(is.na(train$production_companies)==TRUE,"NoProd",train$production_companies)
+train$proUniversal<-ifelse(stri_detect_fixed(train$production_companies,"Universal Pictures"),1,0)
+train$proParamount<-ifelse(stri_detect_fixed(train$production_companies,"Paramount Pictures"),1,0)
+train$proTCF<-ifelse(stri_detect_fixed(train$production_companies,"Twentieth Century Fox Film Corporation"),1,0)
+train$proColumbia<-ifelse(stri_detect_fixed(train$production_companies,"Columbia Pictures"),1,0)
+train$proWarner<-ifelse(stri_detect_fixed(train$production_companies,"Warner Bros."),1,0)
+train$proNLC<-ifelse(stri_detect_fixed(train$production_companies,"New Line Cinema"),1,0)
+train$proDisney<-ifelse(stri_detect_fixed(train$production_companies,"Walt Disney Pictures"),1,0)
+
+
+
