@@ -4,7 +4,7 @@ setwd("C:/Users/ASUS/Desktop/TMDB Box Office Prediction")
 install.packages("reader")
 library(readr)
 test<-read_csv("C:/Users/ASUS/Desktop/TMDB Box Office Prediction/test.csv")
-train<-read_csv("C:/Users/ASUS/Desktop/TMDB Box Office Prediction/train.csv")
+df<-read_csv("C:/Users/ASUS/Desktop/TMDB Box Office Prediction/train.csv")
 
 install.packages("plyr")
 library(plyr)
@@ -24,21 +24,22 @@ map.func = function(x, y = 2){
   return(map)
 }
 
+
 #這邊要做budget跟revenue單位的修正
-for (i in 1:nrow(train)) {
-  if(train[i,"budget"] > 1000 & train[i,"revenue"] < 100){
-    train[i,"revenue"] = train[i,"revenue"] * 10^6
+for (i in 1:nrow(df)) {
+  if(df[i,"budget"] > 1000 & df[i,"revenue"] < 100){
+    df[i,"revenue"] = df[i,"revenue"] * 10^6
   }
 }
 
-train1.id = train$id
-label = train$revenue
-test1.id = test$id
+train.id<-df$id
+label<-df$revenue
+test.id<-test$id
 
 #我先把id跟revenue抽走，然後將兩個train跟test做結合
-train<-train %>% within(rm("id","revenue"))
+df<-df %>% within(rm("id","revenue"))
 test<-test %>% within(rm("id"))
-df<-rbind(train,test)
+df<-rbind(df,test)
 train_raw<-df
 
 #針對df資料裡面release date做整理，讓他變成一致的格式
@@ -171,12 +172,21 @@ train%>%
          -production_countries, -status, -releaseYear, -releaseMonth, -releaseDay,
          -title, -collectionID)
 
+#把資料pre-process的資料合在一起囉
 train<-train[,9:ncol(train)]
 df<-cbind(df,train)
 rm(train)
 
+#資料還可以再建構一次
 df$fe2<-df$budget/df$popularity
 df$fe3<-df$budget/(df$year*df$year)
 df$fe4<-df$year/df$popularity
 df$fe5<-df$popularity*df$runtime
+
+#分開成為test跟train的資料集
+df_train <- df[1:length(train.id),]
+df_test <- df[(length(train.id)+1):nrow(df),]
+
+#針對非常態分配的revenue做調整
+label2 = log1p(label)
 
