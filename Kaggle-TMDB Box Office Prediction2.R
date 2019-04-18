@@ -153,6 +153,11 @@ train$proColumbia<-ifelse(stri_detect_fixed(train$production_companies,"Columbia
 train$proWarner<-ifelse(stri_detect_fixed(train$production_companies,"Warner Bros."),1,0)
 train$proNLC<-ifelse(stri_detect_fixed(train$production_companies,"New Line Cinema"),1,0)
 train$proDisney<-ifelse(stri_detect_fixed(train$production_companies,"Walt Disney Pictures"),1,0)
-
-
+train$proColumbiaPictures<-ifelse(stri_detect_fixed(train$production_companies,"Columbia Pictures Corporation"),1,0)
+train$proTriStar<-ifelse(stri_detect_fixed(train$production_companies,"TriStar Pictures"),1,0)
+train$proFoxSearchlight2<-ifelse(stri_detect_fixed(train$production_companies,"Fox Searchlight Pictures"),1,0)
+train$sizeOfCast<-stri_count(train$cast,regex = "cast_id")
+train$sizeOfCrew<-stri_count(train$crew,regex ="name")
+train$sizeOfCrew<-ifelse(is.na(train$sizeOfCrew),0,train$sizeOfCrew)
+numberOfGenres<-stri_count(train$genres,regex = "name")
 
