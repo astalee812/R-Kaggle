@@ -159,18 +159,8 @@ train$proFoxSearchlight2<-ifelse(stri_detect_fixed(train$production_companies,"F
 train$sizeOfCast<-stri_count(train$cast,regex = "cast_id")
 train$sizeOfCrew<-stri_count(train$crew,regex ="name")
 train$sizeOfCrew<-ifelse(is.na(train$sizeOfCrew),0,train$sizeOfCrew)
-numberOfGenres<-stri_count(train$genres,regex = "name")
+train$numberOfGenres<-stri_count(train$genres,regex = "name")
 train$collectionID<-as.factor(train$collectionID)
-
-train%>%
-  group_by(collectionID)%>%
-  mutate(sizeOfCollection=n())%>%
-  ungroup()%>%
-  mutate(sizeOfCollection=ifelse(sizeOfCollection>1000,0,sizeOfCollection))%>%
-  select(-idPart, -homepage, -imdb_id, -poster_path, -original_title, -genres, -overview, 
-         -tagline, -production_companies, -spoken_languages, -cast, -crew, -Keywords, 
-         -production_countries, -status, -releaseYear, -releaseMonth, -releaseDay,
-         -title, -collectionID)
 
 #把資料pre-process的資料合在一起囉
 train<-train[,9:ncol(train)]
@@ -183,10 +173,47 @@ df$fe3<-df$budget/(df$year*df$year)
 df$fe4<-df$year/df$popularity
 df$fe5<-df$popularity*df$runtime
 
+#再整理一次資料，再xgboost的資料中，是要把所有的變相都變成數值，我把所有變相都轉成數值，順便把沒用的變相刪乾淨
+df<-df[,-c(21)]
+str(df)
+df$tagline_nword<-as.numeric(df$tagline_nword)
+df$crew_len<-as.numeric(df$df$crew_len)
+df$cast_len<-as.numeric(df$df$cast_len)
+df$tag_length<-as.numeric(df$tag_length)
+df$keywords_len<-as.numeric(df$keywords_len)
+df$month<-as.numeric(df$month)
+df$week<-as.numeric(df$week)
+df$numberOfGenres<-as.numeric(df$numberOfGenres)
+df$sizeOfCast<-as.numeric(df$sizeOfCast)
+df$sizeOfCrew<-as.numeric(df$sizeOfCrew)
+
 #分開成為test跟train的資料集
 df_train <- df[1:length(train.id),]
 df_test <- df[(length(train.id)+1):nrow(df),]
 
 #針對非常態分配的revenue做調整
+
 label2 = log1p(label)
+
+#開始做xgboost model!!!
+install.packages("xgboost")
+library(xgboost)
+
+dtrain<-xgb.DMatrix(as.matrix(df_train),label=label2)
+dtest<-xgb.DMatrix(as.matrix(df_test))
+
+param <- list(booster="gbtree",
+              eta=0.03,
+              colsample_bytree = 0.3,
+              max_depth = 6,
+              min_child_weight = 2,
+              base_score = mean(label2),
+              subsample = 0.9)
+set.seed(1235)
+mod.xgb <- xgb.train(data=dtrain,params = param, nrounds= 276,print_every_n = 50)
+pred = predict(mod.xgb, newdata = dtest)
+pred = exp(pred)-1
+sub <- data.frame(test.id, pred)
+colnames(sub) <- c("id", "revenue")
+write.csv(sub, file =paste0(Sys.Date(),"_xgb.csv"), row.names = FALSE)
 
