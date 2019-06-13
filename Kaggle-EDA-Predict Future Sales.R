@@ -1,9 +1,9 @@
-setwd("C:/Users/ASUS/Desktop/Predict Future Sales")
-sales_train<-read.csv("C:/Users/ASUS/Desktop/Predict Future Sales/sales_train_v2.csv")
-testdata<-read.csv("C:/Users/ASUS/Desktop/Predict Future Sales/test.csv")
-shop<-read.csv("C:/Users/ASUS/Desktop/Predict Future Sales/shops.csv")
-item<-read.csv("C:/Users/ASUS/Desktop/Predict Future Sales/items.csv")
-item_categories<-read.csv("C:/Users/ASUS/Desktop/Predict Future Sales/item_categories.csv")
+setwd("C:/Users/ASUS/Desktop/Asta/Kaggle/competitive-data-science-predict-future-sales")
+sales_train<-read.csv("C:/Users/ASUS/Desktop/Asta/Kaggle/competitive-data-science-predict-future-sales/sales_train_v2.csv")
+testdata<-read.csv("C:/Users/ASUS/Desktop/Asta/Kaggle/competitive-data-science-predict-future-sales/test.csv")
+shop<-read.csv("C:/Users/ASUS/Desktop/Asta/Kaggle/competitive-data-science-predict-future-sales/shops.csv")
+item<-read.csv("C:/Users/ASUS/Desktop/Asta/Kaggle/competitive-data-science-predict-future-sales/items.csv")
+item_categories<-read.csv("C:/Users/ASUS/Desktop/Asta/Kaggle/competitive-data-science-predict-future-sales/item_categories.csv")
 
 #看一下各檔案的資料
 head(sales_train)
@@ -39,13 +39,13 @@ salesdata3$date<-as.Date(salesdata3$date,"%d.%m.%Y")
 #看一下資料結構，把數值換成factor
 str(salesdata3)
 salesdata3$year<-year(salesdata3$date)
-salesdata3$year<-as.factor(salesdata3$year)
+salesdata3$year<-as.integer(salesdata3$year)
 salesdata3$month<-month(salesdata3$date)
-salesdata3$month<-as.factor(salesdata3$month)
+salesdata3$month<-as.integer(salesdata3$month)
 salesdata3$day<-day(salesdata3$date)
-salesdata3$day<-as.factor(salesdata3$day)
+salesdata3$day<-as.integer(salesdata3$day)
 salesdata3$weekday<-weekdays(salesdata3$date)
-salesdata3$weekday<-as.factor(salesdata3$weekday)
+salesdata3$weekday<-as.integer(salesdata3$weekday)
 
 #先來更新一下R的版本
 installr::updateR(keep_install_file = TRUE)
@@ -169,12 +169,19 @@ forecast_ID_sales
 plot(forecast_ID_sales)
 
 #--------------------------------------------做出了預測但不是比賽要的格式------------------------------------------------------------------------------------------------
+install.packages("xgboost")
+library(xgboost)
+str(salesdata4)
+salesdata4$item_category_id<-as.factor(salesdata4$item_category_id)
+salesdata4$item_id<-as.factor(salesdata4$item_id)
+salesdata4$shop_id<-as.factor(salesdata4$shop_id)
+salesdata4<-salesdata3[,c(-8:-10)]
+salesdata4$totalsale<-salesdata4$item_price*salesdata4$item_cnt_day
+salematrix<-data.matrix(salesdata4[,c(1,2,3,8,9,10)])#將自變數轉化為矩陣
+library(Matrix)
+saledata_t<-Matrix(salematrix,sparse=T) #利用Matrix函数，將sparse參數設置TRUE，轉化為稀疏矩陣
+saledate_d<-data.matrix(salesdata4[,7]) #將因變數轉化成矩陣
+salesdata5<-list(data=saledata_t,label=saledate_d) #自變數跟因變數變成一個list
+dtrain<-xgb.DMatrix(salesdata5$data,label=salesdata5$label) #建構模型需要的xgb.DMatrix對象,處理對象為稀疏矩陣
 
-install.packages("gbm")
-library(gbm)
-mexp<-lm(item_cnt_day ~  item_id+shop_id , salesdata3)
-summary(mexp)
-pred1<-predict(mexp,testdata,type = "response")
-submission<-data.frame(ID=testdata$ID,item_cnt_month=pred1)
-head(submission)
-write.csv(submission,"submisstion.csv",row.names = FALSE)
+#哭哭! 忘記做test data
