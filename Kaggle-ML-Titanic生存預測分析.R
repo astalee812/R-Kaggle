@@ -1,5 +1,5 @@
-Train<-read.csv("C:/Users/ASUS/Desktop/titanic/train.csv")
-Test<-read.csv("C:/Users/ASUS/Desktop/titanic/test.csv")
+Train<-read.csv("C:/Users/ASUS/Desktop/Asta/Kaggle/titanic/train.csv")
+Test<-read.csv("C:/Users/ASUS/Desktop/Asta/Kaggle/titanic/test.csv")
 
 #檢查一下有沒有NA值，會發現ge部分爆炸多NA值
 colSums(is.na(full))
