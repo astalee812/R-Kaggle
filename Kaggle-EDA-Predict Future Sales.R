@@ -45,6 +45,7 @@ salesdata3$month<-as.integer(salesdata3$month)
 salesdata3$day<-day(salesdata3$date)
 salesdata3$day<-as.integer(salesdata3$day)
 salesdata3$weekday<-weekdays(salesdata3$date)
+salesdata3$weekday<-as.factor(salesdata3$weekday)
 salesdata3$weekday<-as.integer(salesdata3$weekday)
 
 #先來更新一下R的版本
@@ -138,6 +139,10 @@ library(timeDate)
 library(timeSeries)
 ts_mon_sales<-ts(shop_sale$total_qty, start =c(2013,1), end =c(2015,10), frequency= 12)
 plot(ts_mon_sales)
+#-----------------------------------------針對test data相同的資料整理--------------------------------------
+salesdata_T<-merge(testdata,shop,by="shop_id")
+salesdata_T2<-merge(salesdata_T,item,by="item_id")
+salesdata_T3<-merge(salesdata_T2,item_categories,by="item_category_id")
 
 #-----------------------------------------結束EDA----------------------------------------------------------
 
@@ -154,7 +159,6 @@ forecast_sales
 plot(forecast_sales)
 acf(forecast_sales$residuals, lag.max=20)
 plot.ts(forecast_sales$residuals)
-
 #預測by商品
 shop_item_mon_sales<- salesdata3%>% group_by(item_id,month)%>% summarise(items_sold = sum(item_cnt_day), total_sales = sum(item_price*item_cnt_day))%>% ungroup()%>% arrange(desc(items_sold))
 ts_shop_item_mon_sales<- ts(shop_item_mon_sales$items_sold, start =c(2013,1), end =c(2015,10), frequency= 12)
@@ -171,17 +175,40 @@ plot(forecast_ID_sales)
 #--------------------------------------------做出了預測但不是比賽要的格式------------------------------------------------------------------------------------------------
 install.packages("xgboost")
 library(xgboost)
+salesdata4<-salesdata3[,c(-8:-10)]
 str(salesdata4)
 salesdata4$item_category_id<-as.factor(salesdata4$item_category_id)
 salesdata4$item_id<-as.factor(salesdata4$item_id)
 salesdata4$shop_id<-as.factor(salesdata4$shop_id)
-salesdata4<-salesdata3[,c(-8:-10)]
 salesdata4$totalsale<-salesdata4$item_price*salesdata4$item_cnt_day
-salematrix<-data.matrix(salesdata4[,c(1,2,3,8,9,10)])#將自變數轉化為矩陣
+
+#salematrix的欄位名稱要依樣之外，連順序都要一樣
+salematrix<-data.matrix(salesdata4[,c(3,2)])#將自變數轉化為矩陣
 library(Matrix)
 saledata_t<-Matrix(salematrix,sparse=T) #利用Matrix函数，將sparse參數設置TRUE，轉化為稀疏矩陣
 saledate_d<-data.matrix(salesdata4[,7]) #將因變數轉化成矩陣
 salesdata5<-list(data=saledata_t,label=saledate_d) #自變數跟因變數變成一個list
 dtrain<-xgb.DMatrix(salesdata5$data,label=salesdata5$label) #建構模型需要的xgb.DMatrix對象,處理對象為稀疏矩陣
 
-#哭哭! 忘記做test data
+
+library(xgboost)
+testdata1 <- data.matrix(testdata[,c(2:3)])
+dtest <- xgb.DMatrix(data = testdata1)
+param<-list(max_depth=15,
+            eta=0.03,
+            eval_metric = "error"
+            )
+
+model<-xgboost(data = dtrain,
+               eta = 1,
+               max_depth=3,
+               nrounds = 40,
+               eval_metric = "error"
+               )
+
+pred <- predict(model,dtest)
+sub<-data.frame(ID=testdata$ID,item_cnt_month =pred)
+
+write.csv(sub,"sub.csv",row.names = F)
+
+
