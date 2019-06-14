@@ -196,15 +196,23 @@ testdata1 <- data.matrix(testdata[,c(2:3)])
 dtest <- xgb.DMatrix(data = testdata1)
 param<-list(max_depth=15,
             eta=0.03,
-            eval_metric = "error"
+            eval_metric = "mae"
             )
 
+
+model<-xgboost(params = param,data = dtrain,nrounds = 15)
+
+
+
 model<-xgboost(data = dtrain,
-               eta = 1,
-               max_depth=3,
-               nrounds = 40,
-               eval_metric = "error"
-               )
+               eta = 0.3,
+               max_depth=12,
+               nrounds = 1000,
+               min_child_weight=0.5,
+               subsample=1,
+               eval_metric = "rmse",
+               seed= 0
+)
 
 pred <- predict(model,dtest)
 sub<-data.frame(ID=testdata$ID,item_cnt_month =pred)
