@@ -190,30 +190,64 @@ saledate_d<-data.matrix(salesdata4[,7]) #將因變數轉化成矩陣
 salesdata5<-list(data=saledata_t,label=saledate_d) #自變數跟因變數變成一個list
 dtrain<-xgb.DMatrix(salesdata5$data,label=salesdata5$label) #建構模型需要的xgb.DMatrix對象,處理對象為稀疏矩陣
 
-
+#----------------------------設定Xgboost參數-------------------------
 library(xgboost)
 testdata1 <- data.matrix(testdata[,c(2:3)])
 dtest <- xgb.DMatrix(data = testdata1)
 param<-list(max_depth=15,
             eta=0.03,
-            eval_metric = "mae"
+            eval_metric = "error"
             )
-
-
 model<-xgboost(params = param,data = dtrain,nrounds = 15)
 
-
+#---------------------------調整參數---------------------------------
 
 model<-xgboost(data = dtrain,
-               eta = 0.3,
-               max_depth=12,
-               nrounds = 1000,
-               min_child_weight=0.5,
-               subsample=1,
+               colsample_bytree = 0.5, 
+               subsample = 0.5, 
+               eta = 0.05,
+               max_depth=3,
+               nrounds = 15,
                eval_metric = "rmse",
-               seed= 0
+               gamma=0,
+               seed= 42
 )
 
+param2<-list(colsample_bytree = 0.5, 
+             subsample = 0.5, 
+             eta = 0.05,
+             max_depth=3,
+             nrounds = 15,
+             eval_metric = "error",
+             gamma=0,
+             seed= 42
+)
+
+#為了找出最佳nround
+cv.model = xgb.cv(
+  params = param2, 
+  data = dtrain,
+  nfold = 5,     # 5-fold cv
+  nrounds=100,   # 測試1-100，各個樹總數下的模型
+  # 如果當nrounds < 30 時，就已經有overfitting情況發生，那表示不用繼續tune下去了，可以提早停止                
+  early_stopping_rounds = 20, 
+  print_every_n = 20 # 每20個單位才顯示一次結果，
+) 
+
+
+tmp = cv.model$evaluation_log
+
+plot(x=1:nrow(tmp), y= tmp$train_error_mean, col='red', xlab="nround", ylab="error", main="Avg.Performance in CV") 
+points(x=1:nrow(tmp), y= tmp$train_error_mean, col='blue') 
+legend("topright", pch=1, col = c("red", "blue"), 
+       legend = c("Train", "Validation") )
+
+
+
+
+
+
+#---------------------做預測-------------------------------
 pred <- predict(model,dtest)
 sub<-data.frame(ID=testdata$ID,item_cnt_month =pred)
 
