@@ -54,12 +54,20 @@ full$Age[is.na(full$Age)] <- mean(full$Age,na.rm=T)
 sum(is.na(full$Age))
 ggplot(full[1:LT,],aes(x=Age,fill=Survived))+geom_histogram(binwidth =3)
 
+#看看手足跟生存會有什麼差別
+full$SibSp[is.na(full$SibSp)] <- mean(full$SibSp,na.rm=T)
+sum(is.na(full$SibSp))
+ggplot(full[1:LT,],aes(x=SibSp,fill=Survived))+geom_histogram(binwidth =3)
+
+#看看父母跟生存會有什麼差別
+full$Parch[is.na(full$Parch)] <- mean(full$Parch,na.rm=T)
+sum(is.na(full$Parch))
+ggplot(full[1:LT,],aes(x=Parch,fill=Survived))+geom_histogram(binwidth =3)
+
 #看看Fare跟生存會有什麼差別
 full$Fare[is.na(full$Fare)] <- mean(full$Fare,na.rm=T)
 ggplot(data = full[1:LT,],aes(x=Fare,fill=Survived))+geom_histogram(binwidth =20, position="fill")
 
-#轉換一下圖形好了
-ggplot(full,aes(x=Age,fill=Sex))+geom_histogram(binwidth=10,position="dodge")+facet_grid(.~Survived)
 
 #開始做預測囉
 install.packages("rpart")
@@ -71,6 +79,10 @@ gender<-read.csv("C:/Users/ASUS/Desktop/titanic/gender_submission.csv")
 #畫個決策樹
 full_train<-full[1:891,]
 full_test<-full[891:1309,]
+
+model<-rpart(Survived~Age+Sex+Pclass+Embarked+SibSp+Parch+Fare,data=full_train,method = "class")
+rpart.plot(model, type = 2, box.palette = c("red", "green"))
+
 model<-rpart(Survived~Age+Sex+Pclass+Embarked,data=full_train,method = "class")
 rpart.plot(model, type = 2, box.palette = c("red", "green"))
 
@@ -87,14 +99,32 @@ full_train$Survived<-as.factor(full_train$Survived)
 install.packages("e1071")
 library(e1071)
 confusionMatrix(Predict_train,full_train$Survived)
+
+
 #隨機森林
 install.packages("randomForest")
 library(randomForest)
+
 set.seed(123)
-rf_model<-randomForest(factor(Survived) ~ Pclass+ Sex + Fare + Embarked, data = full_train,importance=TRUE,ntree=200)
+rf_model<-randomForest(factor(Survived) ~ Pclass+ Sex + Fare + Embarked + Age + SibSp + Parch, 
+                       data = full_train,importance=TRUE,ntree=200)
+
+
+set.seed(123)
+rf_model<-randomForest(factor(Survived) ~ Pclass+ Sex + Fare + Age, 
+                       data = full_train,importance=TRUE,ntree=200)
+
 print(rf_model)
 plot(rf_model)
 varImpPlot(rf_model)
+importance(rf_model)
+
+tbl.rf <- rf_model$confusion[,c(1,2)]
+accuracy <- sum(diag(tbl.rf)) / sum(tbl.rf)
+accuracy
+
+
+
 #做出預測!!!(我快哭了)
 Prediction<-predict(rf_model,newdata = full_test)
 solution <- data.frame(Survived = Prediction, PassengerID = full_test$PassengerId)
